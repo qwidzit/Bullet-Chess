@@ -63,6 +63,9 @@ const sideOf = (color: PlayerColor): Side => (color === 'white' ? 'w' : 'b');
 
 const PIECE_VALUE: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 
+/** Class on the board while a touch drag is under way; the styling is in style.css. */
+const LIFTING = 'lifting';
+
 /** How far a touch must travel, in squares, before it counts as dragging the piece. */
 const DRAG_START_SQUARES = 0.25;
 
@@ -153,6 +156,9 @@ export class Game {
     // Capture phase, so a cancelling tap is seen before chessground reacts to it.
     boardEl.addEventListener('touchstart', this.onPointerDown, { capture: true, passive: false });
     boardEl.addEventListener('mousedown', this.onPointerDown, { capture: true });
+    document.addEventListener('touchmove', this.onTouchMove, { passive: true });
+    document.addEventListener('touchend', this.onTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', this.onTouchEnd, { passive: true });
   }
 
   get over(): boolean {
@@ -185,6 +191,10 @@ export class Game {
     this.clock.stop();
     this.boardEl.removeEventListener('touchstart', this.onPointerDown, { capture: true });
     this.boardEl.removeEventListener('mousedown', this.onPointerDown, { capture: true });
+    document.removeEventListener('touchmove', this.onTouchMove);
+    document.removeEventListener('touchend', this.onTouchEnd);
+    document.removeEventListener('touchcancel', this.onTouchEnd);
+    this.boardEl.classList.remove(LIFTING);
     this.cg.destroy();
   }
 
@@ -206,6 +216,20 @@ export class Game {
     this.premoves = [];
     this.refreshBoard();
   }
+
+  /**
+   * While a finger is really dragging a piece, the board shows it enlarged
+   * and raised clear of the fingertip. Chessground marks a piece as
+   * "dragging" from the first touch, so the board's own class is switched on
+   * only once the drag has passed its start distance; a tap never lifts.
+   */
+  private onTouchMove = (): void => {
+    if (this.cg.state.draggable.current?.started) this.boardEl.classList.add(LIFTING);
+  };
+
+  private onTouchEnd = (): void => {
+    this.boardEl.classList.remove(LIFTING);
+  };
 
   /** A tap that is neither on one of your pieces nor completing a move clears the queue. */
   private onPointerDown = (e: TouchEvent | MouseEvent): void => {
@@ -255,7 +279,7 @@ export class Game {
     const stamps = this.playerMoveStamps;
     let peak = 0;
     for (let end = 0, start = 0; end < stamps.length; end++) {
-      while (stamps[end] - stamps[start] > 1000) start++;
+      while (stamps[end] - stamps[start] >= 1000) start++;
       peak = Math.max(peak, end - start + 1);
     }
     return {

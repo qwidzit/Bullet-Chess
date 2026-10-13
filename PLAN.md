@@ -29,8 +29,8 @@ Current position in this plan: see [STATUS.md](STATUS.md).
   Lichess's scale). They are tiny (3.5 MB, a few milliseconds per move), which
   suits a phone; the newer single-model Maia is far heavier. Run with the ONNX
   runtime in a background thread.
-- **Licences:** the Maia weights and the board library (chessground) are
-  GPL-3.0. Fine for personal use; it matters if the app is ever distributed.
+- **Licence:** GPL-3.0, because the app bundles GPL-3.0 work (the Maia
+  weights, chessground, Stockfish). Sources are listed in NOTICE.md.
 - **Time controls:** any starting time from 30 seconds to 20 minutes with an
   increment from 0 to 15 seconds. The app is built and measured for bullet;
   longer games work but their pacing is extrapolated.
@@ -84,7 +84,6 @@ Current position in this plan: see [STATUS.md](STATUS.md).
 - Opening repertoires: have the bot steer into chosen openings for practice.
 - Best-move arrow on the review board (today the better move is named in text).
 - Underpromotion (promotion is always a queen today).
-- Enlarged, lifted piece while dragging, as in the chess.com mobile app.
 - A piece set closer to chess.com's default, from a free source.
 - Let the bot think on the player's time (prepare replies in advance), so its
   premoves cost no computation at all.
@@ -92,6 +91,7 @@ Current position in this plan: see [STATUS.md](STATUS.md).
 ## Working on the project
 
 ```bash
+npm test               # the automated tests
 npm run dev            # browser at http://localhost:5173
 npm run android:apk    # build web app, sync, build debug APK
 npm run android:install  # push the built APK to a phone over USB

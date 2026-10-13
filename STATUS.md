@@ -13,7 +13,8 @@ been confirmed working on the phone yet. Next:
 the user tunes rating and speed by feel with the two sliders and reports
 back; their findings become the new defaults.**
 
-The code is on GitHub at https://github.com/qwidzit/Bullet-Chess (public).
+The code is on GitHub at https://github.com/qwidzit/Bullet-Chess (public),
+under GPL-3.0.
 
 | # | Phase | State |
 |---|-------|-------|
@@ -140,6 +141,8 @@ care 0.5 about +70.
   two-tap resign, rematch, Copy PGN, auto-queen promotion.
 - **Input:** tap-tap and drag. A touch only becomes a drag after travelling a
   quarter of a square, so a tap with a slightly moving finger still selects.
+  A piece dragged by finger is drawn 1.85 times its size and raised most of a
+  square above the fingertip; a tap never triggers this.
 - **Premoves:** unlimited queue with the pieces shown at their destinations;
   a failed premove drops the queue; tapping an empty square cancels.
 - **Look:** chess.com-style green board, highlights, move hints, king badges at
@@ -178,7 +181,8 @@ care 0.5 about +70.
   - Accuracy uses the formula Lichess publishes; chess.com's is private.
   - On 30 of the user's real games (2,170 moves): Best 34%, Excellent 13%,
     Good 22%, Book 6%, Inaccuracy 10%, Mistake 5.8%, Miss 1.6%, Blunder 4.6%,
-    Great 1.3 per game, Brilliant 0.2 per game; median accuracy 77.5.
+    Great 1.3 per game, Brilliant 0.1 per game (three in thirty games);
+    median accuracy 77.5.
   - The engine is the small Stockfish at depth 10, so its verdicts are
     noisier than chess.com's server analysis.
 - **Android:** portrait lock, screen kept on, fullscreen, back-swipe blocked
@@ -202,6 +206,7 @@ care 0.5 about +70.
 | Game rules, clocks, premove queue | `src/core/game.ts`, `clock.ts`, `premoves.ts` |
 | Screens and styling | `src/ui/`, `src/style.css` |
 | Calibration tools: simulate, judge, queue of runs | `src/dev/simulate.ts`, `calibrate.ts`, `bench.ts` |
+| Automated tests | `tests/` |
 | Download real games from chess.com | `scripts/fetch-chesscom.mjs` |
 | Real games used for calibration (ratings, moves, clocks; no names) | `models/calibration/` |
 | Maia networks as shipped (ONNX) | `public/maia/` |
@@ -232,5 +237,9 @@ care 0.5 about +70.
   line premoves onto it rather than selecting it. Awaiting feedback.
 - Pieces and sounds are not chess.com's (proprietary). A closer free piece set
   is an open option.
-- No automated test suite; verification is scripted browser input, the
-  simulation, the lc0 comparison and the real-game comparison.
+- The automated tests (`npm test`, 117 of them) cover the clock, premove
+  queue, game endings, statistics, time model, level table, review, opening
+  book, archive and settings, and compare the Maia pipeline with lc0's
+  recorded probabilities. They do not cover the screens, the bots' move
+  sampling, or anything on a real phone. There is no continuous integration:
+  the tests run only when someone runs them.

@@ -129,21 +129,28 @@ export async function reviewGame(
 }
 
 /**
- * Value of the most valuable piece `color` has left to be taken: attacked and
- * either undefended or attacked by something cheaper. Pins are ignored.
+ * Value of the piece on `square` if it can be taken at a profit: attacked and
+ * either undefended or attacked by something cheaper. Zero otherwise. A king
+ * only counts as an attacker of an undefended piece. Pins are ignored.
  */
+function hangingAt(chess: Chess, square: Square): number {
+  const piece = chess.get(square);
+  if (!piece || piece.type === 'k' || piece.type === 'p') return 0;
+  const enemy: Color = piece.color === 'w' ? 'b' : 'w';
+  const attackers = chess.attackers(square, enemy).map(s => chess.get(s)!.type);
+  if (!attackers.length) return 0;
+  const value = PIECE_VALUE[piece.type];
+  if (!chess.attackers(square, piece.color).length) return value;
+  const cheaper = attackers.some(type => type !== 'k' && PIECE_VALUE[type] < value);
+  return cheaper ? value : 0;
+}
+
+/** Value of the most valuable piece `color` has left to be taken. */
 function hangingValue(chess: Chess, color: Color): number {
-  const enemy: Color = color === 'w' ? 'b' : 'w';
   let worst = 0;
   for (const row of chess.board()) {
     for (const piece of row) {
-      if (!piece || piece.color !== color || piece.type === 'k' || piece.type === 'p') continue;
-      const attackers = chess.attackers(piece.square, enemy);
-      if (!attackers.length) continue;
-      const value = PIECE_VALUE[piece.type];
-      const cheapest = Math.min(...attackers.map(s => PIECE_VALUE[chess.get(s as Square)!.type]));
-      const defended = chess.attackers(piece.square, color).length > 0;
-      if (!defended || cheapest < value) worst = Math.max(worst, value);
+      if (piece?.color === color) worst = Math.max(worst, hangingAt(chess, piece.square));
     }
   }
   return worst;
@@ -184,12 +191,17 @@ export function classifyGame(moves: string[], review: GameReview): MoveClass[] {
     else cls = 'excellent';
 
     if (cls === 'best' || cls === 'excellent') {
-      // Brilliant: a sound sacrifice. The move leaves a piece to be taken that
-      // was not already hanging, gives up more than it captures, keeps the
-      // position at least level, and was not played from an already won game.
-      const offered = hangingValue(chess, mover);
+      // Brilliant: a sound sacrifice. The piece that moved can be taken where
+      // it landed, or the move leaves a bigger piece to be taken than was
+      // hanging before; either way it gives up clearly more than it captures,
+      // keeps the position at least level, and was not played from an already
+      // won game.
+      const offered = Math.max(
+        hangingAt(chess, move.to),
+        hangingValue(chess, mover) > hangingBefore ? hangingValue(chess, mover) : 0,
+      );
       const captured = move.captured ? PIECE_VALUE[move.captured] : 0;
-      const sacrifice = offered > hangingBefore && offered - captured >= 2;
+      const sacrifice = offered - captured >= 2;
       if (sacrifice && after >= 50 && before <= 92) cls = 'brilliant';
       else {
         // Great: the one move that held or won. The engine's second choice is

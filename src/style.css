@@ -349,6 +349,20 @@ button.small {
   touch-action: none;
 }
 
+/*
+ * A piece dragged by finger is shown nearly twice its size and raised most of
+ * a square, so the fingertip does not hide it. Margins do the resizing and
+ * lifting because chessground positions the piece with a transform, which a
+ * scale would distort. The square under the finger is still the target.
+ */
+.board.lifting cg-board piece.dragging {
+  width: 23%;
+  height: 23%;
+  margin-left: -5.25%;
+  margin-top: -16.25%;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.35));
+}
+
 /* Board squares and move feedback */
 
 cg-board {

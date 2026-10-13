@@ -1,7 +1,8 @@
 # Third-party components
 
-This project includes or builds on work by others. Their licences apply to
-their parts.
+This project is licensed under the GNU General Public License v3.0 (see
+`LICENSE`). It includes or builds on work by others, listed here with their
+own licences.
 
 ## Included in this repository
 
