@@ -1,0 +1,13 @@
+{
+  "appId": "com.bulletchess.trainer",
+  "appName": "Bullet Chess",
+  "webDir": "dist",
+  "backgroundColor": "#161512",
+  "plugins": {
+    "SystemBars": {
+      "hidden": true,
+      "style": "DARK",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

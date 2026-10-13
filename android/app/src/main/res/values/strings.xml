@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bullet Chess</string>
+    <string name="title_activity_main">Bullet Chess</string>
+    <string name="package_name">com.bulletchess.trainer</string>
+    <string name="custom_url_scheme">com.bulletchess.trainer</string>
+</resources>

@@ -1,0 +1,970 @@
+:root {
+  --bg: #302e2b;
+  --panel: #262522;
+  --panel-hi: #45423e;
+  --text: #ffffff;
+  --muted: #a3a2a0;
+  --accent: #81b64c;
+  --accent-lip: #45753c;
+  --danger: #e0362c;
+  --board-light: #ebecd0;
+  --board-dark: #739552;
+  /* Capacitor injects --safe-area-inset-*; env() covers plain browsers. */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+#app {
+  box-sizing: border-box;
+  height: 100dvh;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--safe-top) 0 var(--safe-bottom);
+}
+
+/* Buttons: flat colour with a darker lip underneath. */
+
+button {
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  border: 0;
+  border-radius: 10px;
+  background: var(--panel);
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--accent);
+  box-shadow: 0 4px 0 var(--accent-lip);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+button.secondary {
+  background: var(--panel-hi);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+button.primary:active,
+button.secondary:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+button.secondary.confirm {
+  background: var(--danger);
+  color: #fff;
+}
+
+button.link {
+  background: none;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 8px;
+}
+
+/* Home */
+
+.home {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* The options scroll; the Play button below them always stays in reach. */
+.home-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.home h1 {
+  margin: 8px 0 4px;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.home h2 {
+  margin: 18px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+}
+
+.chip {
+  flex: 1;
+  padding: 12px 0;
+  font-size: 16px;
+}
+
+.chip.selected {
+  background: var(--panel-hi);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.home-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+button.small {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.tuning {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.bot-desc {
+  min-height: 18px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Sliders: a wide track and a thumb big enough for a fingertip. */
+
+.slider-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.slider-value {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.slider input {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 36px;
+  margin: 0;
+  background: transparent;
+  touch-action: pan-y;
+}
+
+.slider input::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel);
+}
+
+.slider input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 2px 0 var(--accent-lip);
+}
+
+.slider input::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel);
+}
+
+.slider input::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.toggles {
+  display: flex;
+  gap: 20px;
+  margin: 18px 0;
+  color: var(--muted);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.play {
+  flex-shrink: 0;
+  margin-bottom: 4px;
+  padding: 16px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* Game */
+
+.game {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.latency {
+  box-sizing: border-box;
+  height: 48px;
+  margin: 0;
+  padding: 4px 10px;
+  overflow: hidden;
+  contain: strict;
+  font: 11px/13px ui-monospace, Consolas, monospace;
+  color: var(--muted);
+}
+
+.player-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  /* A plain pawn silhouette stands in for a profile picture. */
+  background: #5c5a57 center / 70% no-repeat;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23d6d5d3'%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3Cpath d='M8.5 11h7l2.5 8.5h-12z'/%3E%3Crect x='5' y='19.5' width='14' height='2.5' rx='1'/%3E%3C/svg%3E");
+}
+
+.avatar.you {
+  background-color: var(--accent);
+}
+
+.who-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.material {
+  min-height: 15px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Each clock takes the colour of that player's pieces and dims when idle. */
+.clock {
+  min-width: 104px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  text-align: right;
+  opacity: 0.5;
+}
+
+.clock.white {
+  background: #ffffff;
+  color: #262421;
+}
+
+.clock.black {
+  background: #262421;
+  color: #ffffff;
+}
+
+.clock.active {
+  opacity: 1;
+}
+
+.clock.active.low {
+  background: var(--danger);
+  color: #fff;
+}
+
+.board-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.board-frame {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.board {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* Board squares and move feedback */
+
+cg-board {
+  background-color: var(--board-light);
+  background-image: var(--board-image);
+}
+
+cg-board square.last-move,
+cg-board square.selected {
+  background-color: rgba(255, 255, 51, 0.5);
+}
+
+cg-board square.premove {
+  background-color: rgba(235, 97, 80, 0.8);
+}
+
+/* Legal-move hints: a dot on empty squares, a ring around capturable pieces. */
+cg-board square.move-dest {
+  background-image: radial-gradient(circle closest-side, rgba(0, 0, 0, 0.14) 33%, transparent 36%);
+}
+
+cg-board square.oc.move-dest {
+  background-image: radial-gradient(
+    circle closest-side,
+    transparent 79%,
+    rgba(0, 0, 0, 0.14) 82%,
+    rgba(0, 0, 0, 0.14) 98%,
+    transparent 100%
+  );
+}
+
+/* The square a dragged piece is held over. */
+cg-board square.move-dest.hover {
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.65);
+}
+
+cg-board square.check {
+  background-image: radial-gradient(
+    ellipse at center,
+    rgba(255, 0, 0, 0.9) 0%,
+    rgba(231, 0, 0, 0.7) 30%,
+    rgba(169, 0, 0, 0) 85%
+  );
+}
+
+cg-board square.king-won {
+  background: rgba(129, 182, 76, 0.9);
+}
+
+cg-board square.king-lost {
+  background: rgba(224, 54, 44, 0.9);
+}
+
+/* Game-over badges on the corner of each king's square. */
+
+.badges {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.badge {
+  --size: 5.4%;
+  position: absolute;
+  left: min(calc((var(--col) + 1) * 12.5% - var(--size) * 0.62), calc(100% - var(--size)));
+  top: max(calc(var(--row) * 12.5% - var(--size) * 0.38), 0%);
+  width: var(--size);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-sizing: border-box;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+  animation: badge-pop 0.3s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.badge.won {
+  background: var(--accent);
+}
+
+.badge.lost {
+  background: var(--danger);
+}
+
+.badge.draw {
+  background: #7c7b79;
+}
+
+.badge svg {
+  width: 62%;
+  height: 62%;
+}
+
+.badge span {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@keyframes badge-pop {
+  from {
+    transform: scale(0);
+  }
+}
+
+/* Move list: one line that scrolls sideways, newest move at the right. */
+.moves {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 0 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--panel);
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  contain: content;
+}
+
+.moves::-webkit-scrollbar {
+  display: none;
+}
+
+.move-number {
+  margin-left: 8px;
+  color: var(--muted);
+}
+
+.move-number:first-child {
+  margin-left: 0;
+}
+
+.move {
+  padding: 3px 5px;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.move.current {
+  background: var(--panel-hi);
+  color: #fff;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 10px 12px;
+}
+
+.controls button {
+  padding: 10px 20px;
+}
+
+.status {
+  flex: 1;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Result dialog */
+
+.result {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.result.shown {
+  display: flex;
+}
+
+.result-card {
+  width: min(86%, 340px);
+  max-height: 92%;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  animation: card-in 0.22s ease-out both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+.result-head {
+  position: relative;
+  padding: 18px 16px 14px;
+  border-radius: 12px 12px 0 0;
+  background: #5c5a57;
+  text-align: center;
+}
+
+.result-head.won {
+  background: var(--accent);
+}
+
+.result-title {
+  font-size: 26px;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.result-reason {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 36px;
+  height: 36px;
+  background: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.result-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+button.big {
+  padding: 14px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.report {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+}
+
+.report-title {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.report.pass .report-title {
+  color: var(--accent);
+}
+
+.report.fail .report-title {
+  color: var(--danger);
+}
+
+.report-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+  color: var(--muted);
+}
+
+.report-row span:last-child {
+  text-align: right;
+  color: var(--text);
+}
+
+.report-row.ok span:last-child {
+  color: var(--accent);
+}
+
+.report-row.bad span:last-child {
+  color: #ff8a80;
+}
+
+/* Result dialog: two half-width buttons side by side. */
+
+.result-row {
+  display: flex;
+  gap: 10px;
+}
+
+.result-row button {
+  flex: 1;
+}
+
+/* History and review screens */
+
+.history,
+.review {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 12px 10px;
+  overflow-y: auto;
+}
+
+.history {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.screen-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.screen-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.screen-sub {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.history h2,
+.review h2 {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.empty {
+  margin-top: 48px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.score-table,
+.review-summary table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-table th,
+.score-table td,
+.review-summary th,
+.review-summary td {
+  padding: 8px 10px;
+  text-align: right;
+}
+
+.score-table th:first-child,
+.review-summary th:first-child {
+  text-align: left;
+}
+
+.score-table tr:first-child th,
+.review-summary tr:first-child th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.review-summary {
+  margin-top: 16px;
+}
+
+.game-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+/* The outcome is spelled out as a letter, so it never rests on colour alone. */
+.outcome {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: #7c7b79;
+  font-weight: 800;
+}
+
+.outcome.win {
+  background: var(--accent);
+}
+
+.outcome.loss {
+  background: var(--danger);
+}
+
+.game-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.game-row-sub {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.steps {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 8px;
+}
+
+.step {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 16px;
+}
+
+.readout {
+  min-height: 20px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* In a review the move list marks the moves the engine disliked. */
+.review .move.mistake {
+  box-shadow: inset 0 -2px 0 var(--viz-mistake);
+}
+
+.review .move.blunder {
+  box-shadow: inset 0 -2px 0 var(--viz-blunder);
+}
+
+.review-actions {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0 8px;
+}
+
+/* Charts. The player is blue and the opponent orange wherever they appear. */
+
+.review {
+  --viz-you: #3987e5;
+  --viz-them: #d95926;
+  --viz-blunder: #d03b3b;
+  --viz-mistake: #ec835a;
+  --viz-grid: #37352f;
+  --viz-axis: #55524c;
+}
+
+.chart-slot {
+  min-height: 40px;
+  padding: 6px 0;
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 40px;
+  text-align: center;
+}
+
+.chart {
+  display: block;
+  touch-action: pan-y;
+}
+
+.chart .grid {
+  stroke: var(--viz-grid);
+  stroke-width: 1;
+}
+
+.chart .axis {
+  stroke: var(--viz-axis);
+  stroke-width: 1;
+}
+
+.chart .tick {
+  fill: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart .line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart .line.you {
+  stroke: var(--viz-you);
+}
+
+.chart .area.you {
+  fill: var(--viz-you);
+  opacity: 0.1;
+}
+
+/* Markers carry a ring in the surface colour so they stay legible on the line. */
+.chart .mark,
+.chart .cursor {
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+
+.chart .mark.blunder {
+  fill: var(--viz-blunder);
+}
+
+.chart .mark.mistake {
+  fill: var(--viz-mistake);
+}
+
+.chart .cursor.you {
+  fill: #fff;
+}
+
+.chart .crosshair {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1;
+}
+
+.chart .bar {
+  opacity: 0.8;
+}
+
+.chart .bar.lit {
+  opacity: 1;
+}
+
+.chart .bar.you {
+  fill: var(--viz-you);
+}
+
+.chart .bar.them {
+  fill: var(--viz-them);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend .key {
+  width: 10px;
+  height: 10px;
+  margin-left: 10px;
+  border-radius: 2px;
+}
+
+.legend .key:first-child {
+  margin-left: 0;
+}
+
+.legend .key.dot {
+  border-radius: 50%;
+}
+
+.legend .key.you {
+  background: var(--viz-you);
+}
+
+.legend .key.them {
+  background: var(--viz-them);
+}
+
+.legend .key.blunder {
+  background: var(--viz-blunder);
+}
+
+.legend .key.mistake {
+  background: var(--viz-mistake);
+}

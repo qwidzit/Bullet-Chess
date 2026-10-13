@@ -1,0 +1,7 @@
+node_modules/
+dist/
+# Copied from node_modules by scripts/copy-engine.mjs
+public/engine/
+# Real games downloaded for calibration: personal data, re-fetch with scripts/fetch-chesscom.mjs
+models/calibration/
+*.local

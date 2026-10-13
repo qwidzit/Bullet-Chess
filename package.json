@@ -1,0 +1,31 @@
+{
+  "name": "bullet-chess",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "copy-engine": "node scripts/copy-engine.mjs",
+    "postinstall": "node scripts/copy-engine.mjs",
+    "android:sync": "npm run build && cap sync android",
+    "android:apk": "npm run android:sync && node scripts/build-apk.mjs",
+    "android:install": "node scripts/build-apk.mjs --install"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@lichess-org/chessground": "^10.4.2",
+    "chess.js": "^1.4.0",
+    "onnxruntime-web": "^1.30.0",
+    "stockfish": "^19.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}
