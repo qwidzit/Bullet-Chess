@@ -9,12 +9,14 @@ export interface Settings extends OpponentChoice {
   sound: boolean;
 }
 
-export const BASE_OPTIONS = [30, 60, 90, 120];
-export const INC_OPTIONS = [0, 1];
+/** Starting times the slider stops at, in seconds: 30 seconds to 20 minutes. */
+export const BASE_OPTIONS = [30, 45, 60, 90, 120, 180, 240, 300, 360, 420, 480, 540, 600, 720, 900, 1200];
+/** Increments the slider stops at, in seconds. Zero is kept: most bullet is played without one. */
+export const INC_OPTIONS = [0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15];
 
 /** Slider ranges. Speed is a percentage of the measured real pace. */
 export const RATING_STEP = 50;
-export const SPEED_RANGE = { min: 50, max: 200, step: 10 };
+export const SPEED_RANGE = { min: 5, max: 200, step: 5 };
 
 const KEY = 'bullet-chess.settings';
 
@@ -53,7 +55,12 @@ export function saveSettings(settings: Settings): void {
   }
 }
 
+/** "1+0", "0.5+0", "10+5": minutes, then seconds added per move. */
 export function timeControlLabel(baseSec: number, incSec: number): string {
-  const minutes = baseSec / 60;
-  return `${Number.isInteger(minutes) ? minutes : minutes.toFixed(1)}+${incSec}`;
+  return `${Number((baseSec / 60).toFixed(2))}+${incSec}`;
+}
+
+/** "30 sec", "1.5 min", "20 min". */
+export function durationLabel(seconds: number): string {
+  return seconds < 60 ? `${seconds} sec` : `${Number((seconds / 60).toFixed(2))} min`;
 }

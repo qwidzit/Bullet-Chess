@@ -31,7 +31,12 @@ Current position in this plan: see [STATUS.md](STATUS.md).
   runtime in a background thread.
 - **Licences:** the Maia weights and the board library (chessground) are
   GPL-3.0. Fine for personal use; it matters if the app is ever distributed.
-- **Time controls:** 0.5+0 up to 2+1.
+- **Time controls:** any starting time from 30 seconds to 20 minutes with an
+  increment from 0 to 15 seconds. The app is built and measured for bullet;
+  longer games work but their pacing is extrapolated.
+- **Review follows chess.com's conventions** (move ranks, accuracy) as far as
+  they are public; where they are not, the nearest published method is used
+  and the difference is stated.
 - **Chess.com conventions:** clock starts immediately, every move costs at
   least 0.1 s, multiple premoves, green board and matching effects.
 - **Not copied:** chess.com's piece artwork and sounds are proprietary. The app

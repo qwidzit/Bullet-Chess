@@ -713,8 +713,7 @@ button.big {
   text-align: left;
 }
 
-.score-table tr:first-child th,
-.review-summary tr:first-child th {
+.score-table tr:first-child th {
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);
@@ -785,15 +784,6 @@ button.big {
   font-weight: 600;
 }
 
-/* In a review the move list marks the moves the engine disliked. */
-.review .move.mistake {
-  box-shadow: inset 0 -2px 0 var(--viz-mistake);
-}
-
-.review .move.blunder {
-  box-shadow: inset 0 -2px 0 var(--viz-blunder);
-}
-
 .review-actions {
   display: flex;
   gap: 10px;
@@ -805,8 +795,8 @@ button.big {
 .review {
   --viz-you: #3987e5;
   --viz-them: #d95926;
-  --viz-blunder: #d03b3b;
-  --viz-mistake: #ec835a;
+  --viz-blunder: #ca3431;
+  --viz-mistake: #e6912c;
   --viz-grid: #37352f;
   --viz-axis: #55524c;
 }
@@ -937,4 +927,120 @@ button.big {
 
 .legend .key.mistake {
   background: var(--viz-mistake);
+}
+
+/* Move ranks, in chess.com's colours. Each also carries a symbol, so the
+   rank never rests on colour alone. */
+
+.review {
+  --rank-brilliant: #1baca6;
+  --rank-great: #5c8bb0;
+  --rank-best: #81b64c;
+  --rank-excellent: #81b64c;
+  --rank-good: #77915f;
+  --rank-book: #a88865;
+  --rank-inaccuracy: #f0c15c;
+  --rank-mistake: #e6912c;
+  --rank-miss: #ee6b55;
+  --rank-blunder: #ca3431;
+}
+
+.rank.brilliant { background: var(--rank-brilliant); }
+.rank.great { background: var(--rank-great); }
+.rank.best { background: var(--rank-best); }
+.rank.excellent { background: var(--rank-excellent); }
+.rank.good { background: var(--rank-good); }
+.rank.book { background: var(--rank-book); }
+.rank.inaccuracy { background: var(--rank-inaccuracy); color: #2b2a27; }
+.rank.mistake { background: var(--rank-mistake); }
+.rank.miss { background: var(--rank-miss); }
+.rank.blunder { background: var(--rank-blunder); }
+
+/* The small symbol chip beside a rank's name in the table. */
+.review-summary .rank {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* The same chip pinned to the square a move landed on. */
+.badge.rank {
+  --size: 6.2%;
+  border-width: 1.5px;
+}
+
+.badge.rank span {
+  font-size: 10px;
+}
+
+.review .move.brilliant { box-shadow: inset 0 -2px 0 var(--rank-brilliant); }
+.review .move.great { box-shadow: inset 0 -2px 0 var(--rank-great); }
+.review .move.inaccuracy { box-shadow: inset 0 -2px 0 var(--rank-inaccuracy); }
+.review .move.mistake { box-shadow: inset 0 -2px 0 var(--rank-mistake); }
+.review .move.miss { box-shadow: inset 0 -2px 0 var(--rank-miss); }
+.review .move.blunder { box-shadow: inset 0 -2px 0 var(--rank-blunder); }
+
+.chart .mark.miss,
+.legend .key.miss {
+  fill: var(--rank-miss);
+  background: var(--rank-miss);
+}
+
+/* Legend keys shaped like their chart markers. */
+.legend .key.diamond {
+  border-radius: 0;
+  transform: rotate(45deg) scale(0.85);
+}
+
+.legend .key.triangle {
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+/* Accuracy: the headline figure for each player. */
+.accuracy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.accuracy-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.accuracy-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Rank table: your count, the rank, the opponent's count. */
+.review-summary td:first-child {
+  width: 22%;
+  text-align: left;
+}
+
+.review-summary th {
+  text-align: center !important;
+  font-weight: 600;
+}
+
+.review-summary td:last-child {
+  width: 22%;
 }

@@ -3,7 +3,15 @@ import type { Api } from '@lichess-org/chessground/api';
 import type { Key } from '@lichess-org/chessground/types';
 import { Chess, type Move } from 'chess.js';
 import { deleteGame, isArchived, outcomeOf, pgnOf, saveGame, type SavedGame } from '../core/history';
-import { lossOf, reviewGame, verdictOf, winChance, type GameReview, type Verdict } from '../core/review';
+import {
+  accuracyOf,
+  classifyGame,
+  MOVE_CLASSES,
+  reviewGame,
+  winChance,
+  type GameReview,
+  type MoveClass,
+} from '../core/review';
 import { timeControlLabel } from '../core/settings';
 import { boardImage } from './boardTheme';
 import { chancesChart, timeChart, type Chart, type EvalMark } from './charts';
@@ -11,13 +19,6 @@ import { formatDate, h } from './dom';
 import { statsTable } from './statsTable';
 
 const MAX_BOARD_PX = 400;
-
-const VERDICT_TEXT: Record<Verdict, string> = {
-  good: '',
-  inaccuracy: 'inaccuracy',
-  mistake: 'mistake',
-  blunder: 'blunder',
-};
 
 interface Step {
   fen: string;
@@ -30,11 +31,14 @@ export class ReviewScreen {
   private readonly cg: Api;
   private readonly charts: Chart[] = [];
   private review: GameReview | undefined;
+  /** The rank of every move, once the engine has been through the game. */
+  private classes: MoveClass[] | undefined;
   private ply: number;
   private cancelled = false;
 
   private readonly boardEl = h('div', { class: 'board' });
-  private readonly frame = h('div', { class: 'board-frame' }, this.boardEl);
+  private readonly badges = h('div', { class: 'badges' });
+  private readonly frame = h('div', { class: 'board-frame' }, this.boardEl, this.badges);
   private readonly readout = h('div', { class: 'readout' });
   private readonly summary = h('div', { class: 'review-summary' });
   private readonly chancesSlot = h('div', { class: 'chart-slot' });
@@ -134,8 +138,10 @@ export class ReviewScreen {
         { class: 'legend' },
         h('span', { class: 'key dot blunder' }),
         'Your blunders',
-        h('span', { class: 'key dot mistake' }),
-        'Your mistakes',
+        h('span', { class: 'key diamond miss' }),
+        'misses',
+        h('span', { class: 'key triangle mistake' }),
+        'mistakes',
       ),
       h('h2', { text: 'Seconds per move' }),
       this.timeSlot,
@@ -204,7 +210,8 @@ export class ReviewScreen {
   /** Engine verdicts: reuse stored ones, otherwise compute and store them. */
   private async analyse(width: number): Promise<void> {
     let review = this.game.review;
-    if (!review || review.cp.length !== this.game.moves.length + 1) {
+    // Stored verdicts from an older version of the app lack the second-choice scores.
+    if (!review?.second || review.cp.length !== this.game.moves.length + 1) {
       const computed = await reviewGame(this.game.moves, {
         isCancelled: () => this.cancelled,
         onProgress: (done, total) => (this.chancesSlot.textContent = `Analysing… ${done} of ${total}`),
@@ -216,41 +223,61 @@ export class ReviewScreen {
       if (isArchived(this.game.id)) saveGame(this.game);
     }
     this.review = review;
+    this.classes = classifyGame(this.game.moves, review);
 
     const sign = this.playerIsWhite ? 1 : -1;
     const marks: EvalMark[] = [];
-    const counts = { you: { blunder: 0, mistake: 0 }, them: { blunder: 0, mistake: 0 } };
-    this.game.moves.forEach((_, i) => {
-      const verdict = verdictOf(lossOf(review, i));
-      if (verdict !== 'blunder' && verdict !== 'mistake') return;
+    this.classes.forEach((cls, i) => {
+      this.moveEls[i + 1]?.classList.add(cls);
       const mine = (i % 2 === 0) === this.playerIsWhite;
-      counts[mine ? 'you' : 'them'][verdict]++;
-      this.moveEls[i + 1]?.classList.add(verdict);
-      if (mine) marks.push({ move: i, verdict });
+      if (mine && (cls === 'blunder' || cls === 'mistake' || cls === 'miss')) marks.push({ move: i, verdict: cls });
     });
     this.addChart(
       this.chancesSlot,
       chancesChart(width, review.cp.map(cp => winChance(sign * cp)), marks, ply => this.show(ply)),
     );
-    this.renderSummary(counts);
+    this.renderSummary(review, this.classes);
     this.show(this.ply);
   }
 
-  private renderSummary(counts: Record<'you' | 'them', { blunder: number; mistake: number }>): void {
-    const seconds = (mine: boolean) => {
-      const own = this.game.times.filter((_, i) => ((i % 2 === 0) === this.playerIsWhite) === mine);
-      return own.length ? (own.reduce((a, b) => a + b, 0) / own.length / 1000).toFixed(2) : '–';
+  /** Accuracy for both players, then how many moves of each rank each made. */
+  private renderSummary(review: GameReview, classes: MoveClass[]): void {
+    const accuracy = accuracyOf(review);
+    const mine = this.playerIsWhite ? accuracy.white : accuracy.black;
+    const theirs = this.playerIsWhite ? accuracy.black : accuracy.white;
+    const count = (cls: MoveClass, own: boolean) =>
+      classes.filter((c, i) => c === cls && ((i % 2 === 0) === this.playerIsWhite) === own).length;
+    const seconds = (own: boolean) => {
+      const times = this.game.times.filter((_, i) => ((i % 2 === 0) === this.playerIsWhite) === own);
+      return times.length ? (times.reduce((a, b) => a + b, 0) / times.length / 1000).toFixed(2) : '–';
     };
-    const row = (label: string, you: string | number, them: string | number) =>
-      h('tr', {}, h('th', { text: label }), h('td', { text: String(you) }), h('td', { text: String(them) }));
+
     this.summary.replaceChildren(
+      h(
+        'div',
+        { class: 'accuracy' },
+        h('div', {}, h('div', { class: 'accuracy-value', text: mine.toFixed(1) }), h('div', { text: 'You' })),
+        h('div', { class: 'accuracy-label', text: 'Accuracy' }),
+        h(
+          'div',
+          {},
+          h('div', { class: 'accuracy-value', text: theirs.toFixed(1) }),
+          h('div', { text: this.game.opponent.name }),
+        ),
+      ),
       h(
         'table',
         {},
-        h('tr', {}, h('th', {}), h('th', { text: 'You' }), h('th', { text: this.game.opponent.name })),
-        row('Blunders', counts.you.blunder, counts.them.blunder),
-        row('Mistakes', counts.you.mistake, counts.them.mistake),
-        row('Seconds per move', seconds(true), seconds(false)),
+        ...MOVE_CLASSES.map(({ id, name, mark }) =>
+          h(
+            'tr',
+            {},
+            h('td', { text: String(count(id, true)) }),
+            h('th', {}, h('span', { class: `rank ${id}`, text: mark }), name),
+            h('td', { text: String(count(id, false)) }),
+          ),
+        ),
+        h('tr', {}, h('td', { text: seconds(true) }), h('th', { text: 'Seconds per move' }), h('td', { text: seconds(false) })),
       ),
     );
   }
@@ -276,6 +303,24 @@ export class ReviewScreen {
       this.movesEl.scrollLeft = el.offsetLeft - this.movesEl.clientWidth / 2;
     }
     this.readout.textContent = this.describe();
+    this.placeBadge();
+  }
+
+  /** Pins the move's rank to the corner of the square it landed on, as chess.com does. */
+  private placeBadge(): void {
+    const { move } = this.steps[this.ply];
+    const cls = this.classes?.[this.ply - 1];
+    const rank = MOVE_CLASSES.find(c => c.id === cls);
+    if (!move || !rank) {
+      this.badges.replaceChildren();
+      return;
+    }
+    const file = move.to.charCodeAt(0) - 97;
+    const row = Number(move.to[1]) - 1;
+    const badge = h('div', { class: `badge rank ${rank.id}` }, h('span', { text: rank.mark }));
+    badge.style.setProperty('--col', String(this.playerIsWhite ? file : 7 - file));
+    badge.style.setProperty('--row', String(this.playerIsWhite ? 7 - row : row));
+    this.badges.replaceChildren(badge);
   }
 
   /** One line about the move that led to the position on the board. */
@@ -285,23 +330,23 @@ export class ReviewScreen {
     const index = this.ply - 1;
     const number = `${Math.floor(index / 2) + 1}${index % 2 === 0 ? '.' : '…'}`;
     const parts = [`${number} ${move.san}`, `${((this.game.times[index] ?? 0) / 1000).toFixed(1)} s`];
-    if (this.review) {
-      const verdict = verdictOf(lossOf(this.review, index));
-      if (verdict !== 'good') {
-        parts.push(VERDICT_TEXT[verdict]);
-        const best = this.review.best[index];
-        // Name the engine's choice, in the notation of the position before the move.
-        if (best && best !== this.game.moves[index]) {
-          try {
-            const san = new Chess(this.steps[index].fen).move({
-              from: best.slice(0, 2),
-              to: best.slice(2, 4),
-              promotion: best[4] ?? 'q',
-            }).san;
-            parts.push(`best was ${san}`);
-          } catch {
-            // An unusable engine line just leaves the suggestion out.
-          }
+    const cls = this.classes?.[index];
+    if (this.review && cls) {
+      parts.push(MOVE_CLASSES.find(c => c.id === cls)!.name);
+      const best = this.review.best[index];
+      // For a move that lost something, name the engine's choice, in the
+      // notation of the position before the move.
+      const lacking = cls === 'inaccuracy' || cls === 'mistake' || cls === 'miss' || cls === 'blunder';
+      if (lacking && best && best !== this.game.moves[index]) {
+        try {
+          const san = new Chess(this.steps[index].fen).move({
+            from: best.slice(0, 2),
+            to: best.slice(2, 4),
+            promotion: best[4] ?? 'q',
+          }).san;
+          parts.push(`best was ${san}`);
+        } catch {
+          // An unusable engine line just leaves the suggestion out.
         }
       }
     }

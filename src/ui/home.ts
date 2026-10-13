@@ -1,6 +1,7 @@
 import { MAX_RATING, MIN_RATING, PLAY_STYLES, type OpponentChoice, type PlayStyle } from '../bots';
 import {
   BASE_OPTIONS,
+  durationLabel,
   INC_OPTIONS,
   RATING_STEP,
   saveSettings,
@@ -11,7 +12,28 @@ import {
 } from '../core/settings';
 import { chips, h, slider } from './dom';
 
-const OPPONENTS: { value: OpponentChoice['opponent']; label: string; description: string }[] = [
+/** A slider over an uneven list of values, such as starting times. */
+function stops(
+  label: string,
+  values: number[],
+  current: number,
+  format: (value: number) => string,
+  onChange: (value: number) => void,
+): HTMLElement {
+  // Start on the stop nearest the saved value, in case the list has changed since.
+  const nearest = values.reduce((best, v, i) => (Math.abs(v - current) < Math.abs(values[best] - current) ? i : best), 0);
+  return slider({
+    label,
+    min: 0,
+    max: values.length - 1,
+    step: 1,
+    value: nearest,
+    format: index => format(values[index]),
+    onChange: index => onChange(values[index]),
+  });
+}
+
+const OPPONENTS:{ value: OpponentChoice['opponent']; label: string; description: string }[] = [
   { value: 'rated', label: 'Human-like', description: '' },
   { value: 'instant', label: 'Instant', description: 'Speed test: replies in 0 ms' },
   { value: 'scramble', label: 'Scrambler', description: 'Speed test: replies in 0.1–0.3 s, like a time scramble' },
@@ -88,23 +110,18 @@ export function renderHome(
       h('h1', { text: 'Bullet Chess' }),
       h('button', { class: 'secondary small', text: 'Archive', onTap: onHistory }),
     ),
-    h('h2', { text: 'Minutes' }),
-    chips(
-      BASE_OPTIONS.map(value => ({ value, label: String(value / 60) })),
-      settings.baseSec,
-      value => {
+    h('h2', { text: 'Time control' }),
+    h(
+      'div',
+      { class: 'tuning' },
+      stops('Starting time', BASE_OPTIONS, settings.baseSec, durationLabel, value => {
         settings.baseSec = value;
         update();
-      },
-    ),
-    h('h2', { text: 'Increment (seconds)' }),
-    chips(
-      INC_OPTIONS.map(value => ({ value, label: `+${value}` })),
-      settings.incSec,
-      value => {
+      }),
+      stops('Added per move', INC_OPTIONS, settings.incSec, value => `+${value} sec`, value => {
         settings.incSec = value;
         update();
-      },
+      }),
     ),
     h('h2', { text: 'Play as' }),
     chips<ColorChoice>(

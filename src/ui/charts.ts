@@ -46,7 +46,7 @@ export interface Chart {
 export interface EvalMark {
   /** Index of the move (0 is White's first). */
   move: number;
-  verdict: 'mistake' | 'blunder';
+  verdict: 'mistake' | 'miss' | 'blunder';
 }
 
 /**
@@ -75,11 +75,21 @@ export function chancesChart(
         `<text class="tick" x="${PLOT_LEFT - 6}" y="${y(v) + 3.5}" text-anchor="end">${v}%</text>`,
     )
     .join('');
+  // Each kind of error has its own shape as well as its own colour, since the
+  // three colours are close: circle for a blunder, diamond for a miss,
+  // triangle for a mistake.
   const dots = marks
-    .map(
-      m =>
-        `<circle class="mark ${m.verdict}" cx="${x(m.move + 1).toFixed(1)}" cy="${y(chances[m.move + 1]).toFixed(1)}" r="4"/>`,
-    )
+    .map(m => {
+      const cx = x(m.move + 1);
+      const cy = y(chances[m.move + 1]);
+      const at = `class="mark ${m.verdict}"`;
+      if (m.verdict === 'blunder') return `<circle ${at} cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4"/>`;
+      const points =
+        m.verdict === 'miss'
+          ? [[0, -5], [5, 0], [0, 5], [-5, 0]]
+          : [[0, -5], [5, 4], [-5, 4]];
+      return `<polygon ${at} points="${points.map(([dx, dy]) => `${(cx + dx).toFixed(1)},${(cy + dy).toFixed(1)}`).join(' ')}"/>`;
+    })
     .join('');
 
   const el = svg(

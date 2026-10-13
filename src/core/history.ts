@@ -1,5 +1,6 @@
 import { Chess } from 'chess.js';
 import type { EndReason, PlayerColor, PlayerStats } from './game';
+import type { GameReview } from './review';
 
 /**
  * A finished game. Games are kept on the device only when the player
@@ -26,7 +27,7 @@ export interface SavedGame {
   times: number[];
   stats?: PlayerStats;
   /** Engine verdicts, filled in the first time the game is reviewed. */
-  review?: { cp: number[]; best: string[] };
+  review?: GameReview;
 }
 
 const KEY = 'bullet-chess.history';

@@ -5,9 +5,11 @@ Last updated: 2026-10-13. The plan and the reasons behind it are in
 
 ## Where we are
 
-**All six phases have a first version, and the latest build is installed on
-the phone (sliders, archive, review, play styles, end-of-game statistics).
-None of those newer parts has been confirmed working on the phone yet. Next:
+**All six phases have a first version. The phone has the build with sliders,
+archive, review, play styles and end-of-game statistics; the newest build
+(time-control sliders, 5–200% speed, move ranks and accuracy in the review)
+is built but not yet installed. None of the parts added since calibration has
+been confirmed working on the phone yet. Next:
 the user tunes rating and speed by feel with the two sliders and reports
 back; their findings become the new defaults.**
 
@@ -30,9 +32,16 @@ strength and pace can be judged independently:
 - **Rating**, 800–1600 in steps of 50. Ratings between calibrated levels are
   blended: temperature on a log scale, care linearly, and each move drawn from
   the lower or upper level's network in proportion.
-- **Speed**, 50%–200% in steps of 10. 100% is the pace measured from real
-  players near 1100; 200% moves twice as fast. It no longer depends on rating
-  (the earlier per-level pace was a guess from a small sample and is gone).
+- **Speed**, 5%–200% in steps of 5. 100% is the pace measured from real
+  players near 1100; 200% moves twice as fast, 5% twenty times slower. It no
+  longer depends on rating (the earlier per-level pace was a guess from a
+  small sample and is gone).
+
+Time controls are sliders too: starting time from 30 seconds to 20 minutes
+and increment from 0 to 15 seconds, both on uneven stops (increment includes
+0.5 and 1.5). Only one-minute games were measured; the pacing for everything
+else is scaled by rule, and beyond about 2+1 it is untested even in
+simulation.
 
 The Archive screen totals wins, losses and draws per bot rating. It counts
 only games the player chose to archive, so it is a fair score only if every
@@ -155,10 +164,23 @@ care 0.5 about +70.
   a row, and longest move. Shown on the result dialog and, for archived games,
   in the review. These replaced the latency readout, which is gone from the
   app (its code is in the first commit if it is ever needed again).
-- **Review:** step through any game; Stockfish marks blunders and mistakes
-  and names the better move; charts of the player's winning chances and of
-  seconds per move for both sides, both scrubbable. Verdicts are stored with
-  the game after the first review.
+- **Review:** step through any game. Every move gets a rank on chess.com's
+  scale (Brilliant, Great, Best, Excellent, Good, Book, Inaccuracy, Mistake,
+  Miss, Blunder), shown as a badge on the board, in the move list and as a
+  count per player; errors also name the better move. Both players get an
+  accuracy score. Charts of the player's winning chances and of seconds per
+  move for both sides, both scrubbable. Verdicts are stored with archived
+  games after the first review.
+  - Best down to Blunder use the thresholds chess.com publishes (winning
+    chances lost: 2, 5, 10, 20 points). Brilliant, Great and Miss follow its
+    descriptions with simple rules, and Book uses a built-in list of 106
+    opening lines, so individual labels will sometimes differ from chess.com.
+  - Accuracy uses the formula Lichess publishes; chess.com's is private.
+  - On 30 of the user's real games (2,170 moves): Best 34%, Excellent 13%,
+    Good 22%, Book 6%, Inaccuracy 10%, Mistake 5.8%, Miss 1.6%, Blunder 4.6%,
+    Great 1.3 per game, Brilliant 0.2 per game; median accuracy 77.5.
+  - The engine is the small Stockfish at depth 10, so its verdicts are
+    noisier than chess.com's server analysis.
 - **Android:** portrait lock, screen kept on, fullscreen, back-swipe blocked
   over the board.
 
@@ -171,7 +193,8 @@ care 0.5 about +70.
 | Maia bot, play styles, building a bot from rating and speed | `src/bots/maiaBot.ts` |
 | Archived games and PGN export | `src/core/history.ts` |
 | End-of-game statistics (tallied in the game, shown by) | `src/core/game.ts`, `src/ui/statsTable.ts` |
-| Engine review of a game (also the calibration yardstick) | `src/core/review.ts` |
+| Engine review, move ranks, accuracy (also the calibration yardstick) | `src/core/review.ts` |
+| Opening lines that count as Book | `src/core/openingBook.ts` |
 | History and review screens, review charts | `src/ui/historyScreen.ts`, `reviewScreen.ts`, `charts.ts` |
 | Maia input encoding, move table, inference worker | `src/bots/maia/` |
 | Position features fed to the time model | `src/bots/moveContext.ts` |
@@ -195,6 +218,9 @@ care 0.5 about +70.
   run on the phone. Review speed there is unknown; on this PC a 50-move game
   is analysed in well under a second.
 - Ratings between calibrated levels are blended by rule, not tested.
+- The calibration figures in this file were measured before the review
+  engine began searching two candidate moves per position. The yardstick is
+  the same in kind, but re-measured numbers may differ slightly.
 - Only the 1100 level is fitted to real players. Each simulated match has an
   uncertainty of about 40 rating points, and bot-against-bot spacing may not
   carry over exactly to play against a person.

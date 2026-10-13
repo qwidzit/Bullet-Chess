@@ -8,7 +8,7 @@
 
 import { Chess } from 'chess.js';
 import type { Bot } from '../bots';
-import { lossOf, reviewGame } from '../core/review';
+import { lossOf, reviewGame, type Evaluation } from '../core/review';
 import { simulate, type SimGame } from './simulate';
 
 /** A game reduced to what the measurements need. */
@@ -37,7 +37,7 @@ export interface MoveStat {
 }
 
 /** Evaluations shared across games: openings repeat. */
-const evalCache = new Map<string, { cp: number; best: string }>();
+const evalCache = new Map<string, Evaluation>();
 
 /** Judges every move of one game, with the same engine review the app shows players. */
 export async function analyse(game: GameRecord): Promise<MoveStat[]> {
