@@ -4,7 +4,7 @@ import { formatDate, h } from './dom';
 
 const OUTCOME_LETTER = { win: 'W', loss: 'L', draw: 'D' };
 
-/** Wins, losses and draws against each opponent rating: the feedback calibration needs. */
+/** Wins, losses and draws against each opponent rating, over the archived games. */
 function scoreTable(games: SavedGame[]): HTMLElement | null {
   const byRating = new Map<number, { win: number; loss: number; draw: number }>();
   for (const game of games) {
@@ -91,7 +91,7 @@ export function renderHistory(
         'div',
         { class: 'screen-head' },
         h('button', { class: 'secondary small', text: '‹ Back', onTap: onBack }),
-        h('div', { class: 'screen-title' }, h('div', { text: 'History' })),
+        h('div', { class: 'screen-title' }, h('div', { text: 'Archive' })),
         games.length ? copyAll : null,
       ),
       games.length
@@ -102,7 +102,7 @@ export function renderHistory(
             h('h2', { text: `${games.length} ${games.length === 1 ? 'game' : 'games'}` }),
             ...games.map(game => gameRow(game, onOpen)),
           )
-        : h('div', { class: 'empty', text: 'Games you finish will appear here.' }),
+        : h('div', { class: 'empty', text: 'Nothing here yet. Tap Archive after a game to keep it.' }),
     ),
   );
 }

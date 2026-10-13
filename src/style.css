@@ -252,17 +252,6 @@ button.small {
   justify-content: center;
 }
 
-.latency {
-  box-sizing: border-box;
-  height: 48px;
-  margin: 0;
-  padding: 4px 10px;
-  overflow: hidden;
-  contain: strict;
-  font: 11px/13px ui-monospace, Consolas, monospace;
-  color: var(--muted);
-}
-
 .player-bar {
   display: flex;
   align-items: center;
@@ -610,46 +599,27 @@ button.big {
   font-weight: 800;
 }
 
-.report {
+/* End-of-game statistics: label on the left, figure on the right. */
+.stats {
   padding: 10px 12px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.25);
-  font-size: 12px;
+  font-size: 13px;
 }
 
-.report-title {
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.report.pass .report-title {
-  color: var(--accent);
-}
-
-.report.fail .report-title {
-  color: var(--danger);
-}
-
-.report-row {
+.stats-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 2px 0;
+  padding: 3px 0;
   color: var(--muted);
 }
 
-.report-row span:last-child {
+.stats-row span:last-child {
   text-align: right;
   color: var(--text);
-}
-
-.report-row.ok span:last-child {
-  color: var(--accent);
-}
-
-.report-row.bad span:last-child {
-  color: #ff8a80;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Result dialog: two half-width buttons side by side. */

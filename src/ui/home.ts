@@ -38,15 +38,12 @@ export function renderHome(
       : (OPPONENTS.find(o => o.value === settings.opponent)?.description ?? '');
   };
 
-  const toggle = (label: string, key: 'showLatency' | 'sound') => {
-    const input = h('input', { attrs: { type: 'checkbox' } });
-    input.checked = settings[key];
-    input.addEventListener('change', () => {
-      settings[key] = input.checked;
-      update();
-    });
-    return h('label', { class: 'toggle' }, input, label);
-  };
+  const sound = h('input', { attrs: { type: 'checkbox' } });
+  sound.checked = settings.sound;
+  sound.addEventListener('change', () => {
+    settings.sound = sound.checked;
+    update();
+  });
 
   tuning.append(
     slider({
@@ -89,7 +86,7 @@ export function renderHome(
       'div',
       { class: 'home-head' },
       h('h1', { text: 'Bullet Chess' }),
-      h('button', { class: 'secondary small', text: 'History', onTap: onHistory }),
+      h('button', { class: 'secondary small', text: 'Archive', onTap: onHistory }),
     ),
     h('h2', { text: 'Minutes' }),
     chips(
@@ -133,7 +130,7 @@ export function renderHome(
     ),
     tuning,
     description,
-    h('div', { class: 'toggles' }, toggle('Latency readout', 'showLatency'), toggle('Sound', 'sound')),
+    h('div', { class: 'toggles' }, h('label', { class: 'toggle' }, sound, 'Sound')),
   );
   root.replaceChildren(h('div', { class: 'home' }, options, playButton));
   update();

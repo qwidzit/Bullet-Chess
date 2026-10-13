@@ -6,7 +6,6 @@ export interface Settings extends OpponentChoice {
   baseSec: number;
   incSec: number;
   color: ColorChoice;
-  showLatency: boolean;
   sound: boolean;
 }
 
@@ -27,7 +26,6 @@ const defaults: Settings = {
   rating: 1100,
   speedPct: 100,
   playStyle: 'balanced',
-  showLatency: false,
   sound: true,
 };
 

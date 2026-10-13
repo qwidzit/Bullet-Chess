@@ -64,9 +64,10 @@ Current position in this plan: see [STATUS.md](STATUS.md).
 
 ### Phase 5 notes
 
-- Built: game history with per-rating results and PGN export; review with
-  engine verdicts, winning-chances chart and seconds-per-move chart; three
-  play styles (Balanced, Aggressive, Solid).
+- Built: an archive of games the player chooses to keep, with per-rating
+  results and PGN export; review with engine verdicts, winning-chances chart
+  and seconds-per-move chart; end-of-game statistics; three play styles
+  (Balanced, Aggressive, Solid).
 - Not built from the original wish list: fixed opening repertoires, and time
   styles as personalities (e.g. a thinker who gets into time trouble). The
   speed slider covers the simple case; `TimeProfile` is per-bot if more is

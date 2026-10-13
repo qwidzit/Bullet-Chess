@@ -1,7 +1,10 @@
 import { Chess } from 'chess.js';
-import type { EndReason, PlayerColor } from './game';
+import type { EndReason, PlayerColor, PlayerStats } from './game';
 
-/** A finished game, as kept on the device. */
+/**
+ * A finished game. Games are kept on the device only when the player
+ * archives them; until then one lives just as long as its result is on screen.
+ */
 export interface SavedGame {
   id: string;
   /** When the game ended, in ms since 1970. */
@@ -21,12 +24,13 @@ export interface SavedGame {
   moves: string[];
   /** Time charged for each move, in ms. */
   times: number[];
+  stats?: PlayerStats;
   /** Engine verdicts, filled in the first time the game is reviewed. */
   review?: { cp: number[]; best: string[] };
 }
 
 const KEY = 'bullet-chess.history';
-/** Oldest games are dropped beyond this, to stay inside browser storage limits. */
+/** Oldest archived games are dropped beyond this, to stay inside browser storage limits. */
 const MAX_GAMES = 400;
 
 export function loadHistory(): SavedGame[] {
@@ -46,10 +50,12 @@ function store(games: SavedGame[]): void {
   }
 }
 
-/** Adds a game, or replaces the stored copy with the same id. Newest first. */
+/** Archives a game, or replaces the archived copy with the same id. Newest first. */
 export function saveGame(game: SavedGame): void {
   store([game, ...loadHistory().filter(g => g.id !== game.id)]);
 }
+
+export const isArchived = (id: string): boolean => loadHistory().some(g => g.id === id);
 
 export function deleteGame(id: string): void {
   store(loadHistory().filter(g => g.id !== id));

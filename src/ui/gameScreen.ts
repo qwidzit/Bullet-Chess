@@ -2,11 +2,11 @@ import { opponentFor } from '../bots';
 import { formatClock, type Side } from '../core/clock';
 import { Game, type EndReason, type GameResult, type PlayerColor } from '../core/game';
 import { pgnOf, saveGame, type SavedGame } from '../core/history';
-import { LatencyMeter } from '../core/latencyMeter';
 import { timeControlLabel, type Settings } from '../core/settings';
 import * as sounds from '../core/sounds';
 import { boardImage } from './boardTheme';
 import { h } from './dom';
+import { statsTable } from './statsTable';
 
 const LOW_TIME_MS = 10_000;
 const MAX_BOARD_PX = 560;
@@ -43,9 +43,7 @@ interface PlayerBar {
 /** The playing screen: board, both clocks, controls and the result dialog. */
 export class GameScreen {
   private game: Game | undefined;
-  private meter: LatencyMeter | undefined;
   private raf = 0;
-  private meterTimer: ReturnType<typeof setInterval> | undefined;
   private resignTimer: ReturnType<typeof setTimeout> | undefined;
   private lowTimeWarned = false;
   private disposed = false;
@@ -55,7 +53,6 @@ export class GameScreen {
   private readonly badges = h('div', { class: 'badges' });
   private readonly frame = h('div', { class: 'board-frame' }, this.boardEl, this.badges);
   private readonly boardWrap = h('div', { class: 'board-wrap' }, this.frame);
-  private readonly latencyEl = h('pre', { class: 'latency' });
   private readonly movesEl = h('div', { class: 'moves' });
   private lastMoveEl: HTMLElement | undefined;
   private readonly status = h('div', { class: 'status' });
@@ -87,7 +84,6 @@ export class GameScreen {
     this.el = h(
       'div',
       { class: 'game' },
-      this.latencyEl,
       this.bars.top.bar,
       this.boardWrap,
       this.bars.bottom.bar,
@@ -97,12 +93,6 @@ export class GameScreen {
     );
     root.replaceChildren(this.el);
 
-    if (settings.showLatency) {
-      this.meter = new LatencyMeter();
-      this.meter.attach();
-    } else {
-      this.latencyEl.hidden = true;
-    }
     window.addEventListener('resize', this.sizeBoard);
     this.sizeBoard();
     void this.newGame();
@@ -116,9 +106,7 @@ export class GameScreen {
     this.disposed = true;
     window.removeEventListener('resize', this.sizeBoard);
     cancelAnimationFrame(this.raf);
-    clearInterval(this.meterTimer);
     clearTimeout(this.resignTimer);
-    this.meter?.detach();
     this.game?.destroy();
   }
 
@@ -174,7 +162,6 @@ export class GameScreen {
           this.renderMaterial();
           this.addMove(move.san, move.color === 'w');
         },
-        meter: this.meter,
       },
     );
     this.game = game;
@@ -194,7 +181,6 @@ export class GameScreen {
 
     this.status.textContent = '';
     this.setPlaying(true);
-    this.meter?.start();
     game.start();
 
     cancelAnimationFrame(this.raf);
@@ -203,13 +189,6 @@ export class GameScreen {
       if (!game.over && this.game === game) this.raf = requestAnimationFrame(tick);
     };
     this.raf = requestAnimationFrame(tick);
-
-    clearInterval(this.meterTimer);
-    if (this.meter) {
-      this.meterTimer = setInterval(() => {
-        this.latencyEl.textContent = this.meter!.lines().join('\n');
-      }, 250);
-    }
   }
 
   private renderClocks(): void {
@@ -282,11 +261,11 @@ export class GameScreen {
     this.resignButton.textContent = 'Resign';
   }
 
-  /** Stores the finished game in the history. */
-  private keep(result: GameResult): SavedGame {
+  /** The finished game in the form the archive and the review screen use. */
+  private record(result: GameResult): SavedGame {
     const { settings } = this;
     const rated = settings.opponent === 'rated';
-    const saved: SavedGame = {
+    return {
       id: `${Date.now()}`,
       playedAt: Date.now(),
       baseSec: settings.baseSec,
@@ -301,10 +280,8 @@ export class GameScreen {
       reason: result.reason,
       moves: result.moves,
       times: result.times,
+      stats: result.stats,
     };
-    // A game with no moves at all (resigned at once) is not worth keeping.
-    if (result.moves.length) saveGame(saved);
-    return saved;
   }
 
   private showResult(result: GameResult): void {
@@ -312,11 +289,19 @@ export class GameScreen {
     this.resetResign();
     this.setPlaying(false);
     this.rematchButton.hidden = false;
-    this.meter?.stop();
-    clearInterval(this.meterTimer);
     this.showBadges(result);
 
-    const saved = this.keep(result);
+    // Nothing is kept unless the player asks: the Archive button stores it.
+    const saved = this.record(result);
+    const archive = h('button', {
+      class: 'link',
+      text: 'Archive',
+      onTap: () => {
+        saveGame(saved);
+        archive.textContent = 'Archived';
+        archive.disabled = true;
+      },
+    });
     const won = result.winner === this.playerColor;
     const headline = result.winner === null ? 'Draw' : won ? 'You Won!' : 'You Lost';
     const close = () => this.resultEl.classList.remove('shown');
@@ -344,7 +329,7 @@ export class GameScreen {
       h(
         'div',
         { class: 'result-body' },
-        this.meter ? this.latencyReport() : null,
+        result.stats.moves ? statsTable(result.stats) : null,
         h('button', { class: 'primary big', text: 'Rematch', onTap: () => void this.newGame() }),
         h(
           'div',
@@ -352,7 +337,8 @@ export class GameScreen {
           h('button', { class: 'secondary big', text: 'Review', onTap: () => this.onReview(saved) }),
           h('button', { class: 'secondary big', text: 'New Game', onTap: () => this.onExit() }),
         ),
-        copy,
+        // A game with no moves at all has nothing worth archiving.
+        h('div', { class: 'result-row' }, result.moves.length ? archive : null, copy),
       ),
     );
     // Tapping outside the card closes it, to look at the final position.
@@ -382,28 +368,5 @@ export class GameScreen {
       place(result.winner, badge('won', ICONS.crown));
       place(result.winner === 'white' ? 'black' : 'white', badge('lost', loserIcon(result.reason)));
     }
-  }
-
-  private latencyReport(): HTMLElement {
-    const { verdict, rows } = this.meter!.summary();
-    const title =
-      verdict === 'pass'
-        ? 'Speed test: pass'
-        : verdict === 'fail'
-          ? 'Speed test: too slow'
-          : 'Speed test: play at least 10 moves';
-    return h(
-      'div',
-      { class: `report ${verdict}` },
-      h('div', { class: 'report-title', text: title }),
-      ...rows.map(row =>
-        h(
-          'div',
-          { class: `report-row${row.ok === undefined ? '' : row.ok ? ' ok' : ' bad'}` },
-          h('span', { text: row.label }),
-          h('span', { text: row.value }),
-        ),
-      ),
-    );
   }
 }

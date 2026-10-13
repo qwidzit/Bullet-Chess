@@ -5,7 +5,6 @@ import type { Key } from '@lichess-org/chessground/types';
 import { Chess, type Move } from 'chess.js';
 import type { Bot } from '../bots';
 import { Clock, other, type Side } from './clock';
-import type { LatencyMeter } from './latencyMeter';
 import { applyPremove, premoveDests, type Premove } from './premoves';
 import * as sounds from './sounds';
 
@@ -28,6 +27,22 @@ export interface GameResult {
   moves: string[];
   /** Time charged for each move, in ms. */
   times: number[];
+  stats: PlayerStats;
+}
+
+/** How the player handled the board and clock in one game. */
+export interface PlayerStats {
+  moves: number;
+  /** Moves per second of the player's own clock time. */
+  movesPerSec: number;
+  /** Most moves made inside any one second. */
+  peakMovesPerSec: number;
+  premovesQueued: number;
+  /** Premoves that were still legal when their turn came, and were played. */
+  premovesPlayed: number;
+  /** Longest run of moves in a row that were all premoves. */
+  bestPremoveStreak: number;
+  longestMoveMs: number;
 }
 
 export interface GameConfig {
@@ -41,7 +56,6 @@ export interface GameHooks {
   onEnd(result: GameResult): void;
   /** Called after every move actually played, by either side. */
   onMove?(move: Move): void;
-  meter?: LatencyMeter;
 }
 
 const colorOf = (side: Side): PlayerColor => (side === 'w' ? 'white' : 'black');
@@ -88,6 +102,12 @@ export class Game {
   private premoves: Premove[] = [];
   private uciMoves: string[] = [];
   private moveTimes: number[] = [];
+  /** When each of the player's moves was played, for the busiest-second statistic. */
+  private playerMoveStamps: number[] = [];
+  private premovesQueued = 0;
+  private premovesPlayed = 0;
+  private premoveStreak = 0;
+  private bestPremoveStreak = 0;
   private lastMove: Key[] | undefined;
   private lastMoveCaptured = false;
   private botTurnId = 0;
@@ -205,16 +225,48 @@ export class Game {
     if (this.over) return;
     if (this.turn !== this.playerSide || this.premoves.length) {
       this.premoves.push({ from: orig, to: dest });
+      this.premovesQueued++;
       sounds.play('premove');
-      this.hooks.meter?.premoveSet();
       this.refreshBoard();
       return;
     }
     const played = this.applyMove(orig, dest, 'q');
     this.refreshBoard();
     if (!played) return;
-    this.hooks.meter?.userMove(false);
+    this.notePlayerMove(false);
     if (!this.checkGameEnd()) void this.requestBotMove();
+  }
+
+  /** Keeps the tallies behind the end-of-game statistics. */
+  private notePlayerMove(premove: boolean): void {
+    this.playerMoveStamps.push(performance.now());
+    if (!premove) {
+      this.premoveStreak = 0;
+      return;
+    }
+    this.premovesPlayed++;
+    this.bestPremoveStreak = Math.max(this.bestPremoveStreak, ++this.premoveStreak);
+  }
+
+  private playerStats(): PlayerStats {
+    const own = this.moveTimes.filter((_, ply) => (ply % 2 === 0) === (this.playerSide === 'w'));
+    const usedMs = own.reduce((a, b) => a + b, 0);
+    // The most moves that fell inside any one second.
+    const stamps = this.playerMoveStamps;
+    let peak = 0;
+    for (let end = 0, start = 0; end < stamps.length; end++) {
+      while (stamps[end] - stamps[start] > 1000) start++;
+      peak = Math.max(peak, end - start + 1);
+    }
+    return {
+      moves: own.length,
+      movesPerSec: usedMs ? own.length / (usedMs / 1000) : 0,
+      peakMovesPerSec: peak,
+      premovesQueued: this.premovesQueued,
+      premovesPlayed: this.premovesPlayed,
+      bestPremoveStreak: this.bestPremoveStreak,
+      longestMoveMs: Math.max(0, ...own),
+    };
   }
 
   private async requestBotMove(): Promise<void> {
@@ -242,16 +294,13 @@ export class Game {
     }
     if (turnId !== this.botTurnId || this.over) return;
 
-    const computeMs = performance.now() - started;
-    this.hooks.meter?.botComputed(computeMs);
-    const wait = thinkMs - computeMs;
+    const wait = thinkMs - (performance.now() - started);
     if (wait > 2) this.botTimer = setTimeout(() => this.playBotMove(move, turnId), wait);
     else this.playBotMove(move, turnId);
   }
 
   private playBotMove(uci: string, turnId: number): void {
     if (turnId !== this.botTurnId || this.over) return;
-    this.hooks.meter?.botMoveArrived(performance.now());
 
     let played = this.applyMove(uci.slice(0, 2), uci.slice(2, 4), uci[4] ?? 'q');
     if (!played && !this.over) {
@@ -275,7 +324,7 @@ export class Game {
     const next = this.premoves.shift();
     if (next && this.applyMove(next.from, next.to, 'q')) {
       this.refreshBoard();
-      this.hooks.meter?.userMove(true);
+      this.notePlayerMove(true);
       if (!this.checkGameEnd()) void this.requestBotMove();
       return;
     }
@@ -395,7 +444,13 @@ export class Game {
     this.clock.stop();
     this.premoves = [];
 
-    this.result = { winner, reason, moves: [...this.uciMoves], times: [...this.moveTimes] };
+    this.result = {
+      winner,
+      reason,
+      moves: [...this.uciMoves],
+      times: [...this.moveTimes],
+      stats: this.playerStats(),
+    };
 
     // Chessground reports moves a moment after showing them, so the board can
     // be one move ahead of the game when the flag falls. Show the real position.

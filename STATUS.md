@@ -5,10 +5,13 @@ Last updated: 2026-10-13. The plan and the reasons behind it are in
 
 ## Where we are
 
-**All six phases have a first version. The build with rating and speed
-sliders, history, review and play styles is built but not yet installed on the
-phone. Next: the user tunes rating and speed by feel with the two sliders and
-reports back; their findings become the new defaults.**
+**All six phases have a first version, and the latest build is installed on
+the phone (sliders, archive, review, play styles, end-of-game statistics).
+None of those newer parts has been confirmed working on the phone yet. Next:
+the user tunes rating and speed by feel with the two sliders and reports
+back; their findings become the new defaults.**
+
+The code is on GitHub at https://github.com/qwidzit/Bullet-Chess (public).
 
 | # | Phase | State |
 |---|-------|-------|
@@ -31,8 +34,9 @@ strength and pace can be judged independently:
   players near 1100; 200% moves twice as fast. It no longer depends on rating
   (the earlier per-level pace was a guess from a small sample and is gone).
 
-The History screen totals wins, losses and draws per bot rating, which is the
-feedback this calibration needs.
+The Archive screen totals wins, losses and draws per bot rating. It counts
+only games the player chose to archive, so it is a fair score only if every
+game against a rating is archived, not just the memorable ones.
 
 ## Phase 4: what was wrong and what changed
 
@@ -142,9 +146,15 @@ care 0.5 about +70.
   move probabilities by kind of move; in a four-game check the aggressive bot
   captured on 34% of its moves against 19% for the solid one. Their effect on
   strength is unmeasured: calibration was done with Balanced.
-- **History:** every finished game is kept on the device (up to 400), with a
-  table of wins, losses and draws per bot rating, and PGN export with clock
-  times, one game or all.
+- **Archive:** a game is kept on the device only when the player taps Archive
+  on the result dialog or in the review (up to 400). The Archive screen lists
+  them with a table of wins, losses and draws per bot rating, and exports PGN
+  with clock times, one game or all.
+- **End-of-game statistics:** average moves per second, most moves in one
+  second, premoves played out of premoves queued, longest chain of premoves in
+  a row, and longest move. Shown on the result dialog and, for archived games,
+  in the review. These replaced the latency readout, which is gone from the
+  app (its code is in the first commit if it is ever needed again).
 - **Review:** step through any game; Stockfish marks blunders and mistakes
   and names the better move; charts of the player's winning chances and of
   seconds per move for both sides, both scrubbable. Verdicts are stored with
@@ -159,7 +169,8 @@ care 0.5 about +70.
 | Level table and blending between levels | `src/bots/levels.ts` |
 | Time model and all its tunable numbers | `src/bots/timeModel.ts` |
 | Maia bot, play styles, building a bot from rating and speed | `src/bots/maiaBot.ts` |
-| Saved games and PGN export | `src/core/history.ts` |
+| Archived games and PGN export | `src/core/history.ts` |
+| End-of-game statistics (tallied in the game, shown by) | `src/core/game.ts`, `src/ui/statsTable.ts` |
 | Engine review of a game (also the calibration yardstick) | `src/core/review.ts` |
 | History and review screens, review charts | `src/ui/historyScreen.ts`, `reviewScreen.ts`, `charts.ts` |
 | Maia input encoding, move table, inference worker | `src/bots/maia/` |

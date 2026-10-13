@@ -2,12 +2,13 @@ import { Chessground } from '@lichess-org/chessground';
 import type { Api } from '@lichess-org/chessground/api';
 import type { Key } from '@lichess-org/chessground/types';
 import { Chess, type Move } from 'chess.js';
-import { deleteGame, outcomeOf, pgnOf, saveGame, type SavedGame } from '../core/history';
+import { deleteGame, isArchived, outcomeOf, pgnOf, saveGame, type SavedGame } from '../core/history';
 import { lossOf, reviewGame, verdictOf, winChance, type GameReview, type Verdict } from '../core/review';
 import { timeControlLabel } from '../core/settings';
 import { boardImage } from './boardTheme';
 import { chancesChart, timeChart, type Chart, type EvalMark } from './charts';
 import { formatDate, h } from './dom';
+import { statsTable } from './statsTable';
 
 const MAX_BOARD_PX = 400;
 
@@ -68,20 +69,31 @@ export class ReviewScreen {
           .catch(() => (copy.textContent = 'Copy failed'));
       },
     });
-    const remove = h('button', {
-      class: 'secondary small',
-      text: 'Delete',
-      onTap: () => {
-        // Two taps, like resigning: the first arms the button.
-        if (!remove.classList.contains('confirm')) {
-          remove.classList.add('confirm');
-          remove.textContent = 'Confirm?';
-          return;
-        }
-        deleteGame(game.id);
-        this.onBack();
-      },
-    });
+    // An archived game can be deleted; any other can be archived from here.
+    const keep: HTMLButtonElement = isArchived(game.id)
+      ? h('button', {
+          class: 'secondary small',
+          text: 'Delete',
+          onTap: () => {
+            // Two taps, like resigning: the first arms the button.
+            if (!keep.classList.contains('confirm')) {
+              keep.classList.add('confirm');
+              keep.textContent = 'Confirm?';
+              return;
+            }
+            deleteGame(game.id);
+            this.onBack();
+          },
+        })
+      : h('button', {
+          class: 'secondary small',
+          text: 'Archive',
+          onTap: () => {
+            saveGame(game);
+            keep.textContent = 'Archived';
+            keep.disabled = true;
+          },
+        });
 
     const step = (label: string, title: string, to: () => number) =>
       h('button', { class: 'secondary step', text: label, onTap: () => this.show(to()), attrs: { 'aria-label': title } });
@@ -136,7 +148,9 @@ export class ReviewScreen {
         game.opponent.name,
       ),
       this.summary,
-      h('div', { class: 'review-actions' }, copy, remove),
+      game.stats ? h('h2', { text: 'Your handling' }) : null,
+      game.stats ? statsTable(game.stats) : null,
+      h('div', { class: 'review-actions' }, copy, keep),
     );
     root.replaceChildren(el);
 
@@ -198,7 +212,8 @@ export class ReviewScreen {
       if (!computed || this.cancelled) return;
       review = computed;
       this.game.review = review;
-      saveGame(this.game);
+      // Keep the verdicts with the game, but only if the player archived it.
+      if (isArchived(this.game.id)) saveGame(this.game);
     }
     this.review = review;
 
