@@ -9,6 +9,14 @@ These bots are fitted to real one-minute games. They rattle off their opening
 moves, premove some recaptures, sink into thought in sharp positions, barely
 speed up when they should, and lose on time.
 
+## Download
+
+Get the latest `.apk` from the
+[Releases page](https://github.com/qwidzit/Bullet-Chess/releases/latest) and
+open it on an Android phone (Android 7 or later). Android will ask you to
+allow installing apps from your browser or file manager, because the app is
+not from the Play Store; the release notes walk through it.
+
 ## What it does
 
 - **Human-like opponents.** Move choice comes from the
