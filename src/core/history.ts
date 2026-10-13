@@ -2,6 +2,9 @@ import { Chess } from 'chess.js';
 import type { EndReason, PlayerColor, PlayerStats } from './game';
 import type { GameReview } from './review';
 
+/** Stands in for the ending of a pasted game whose result line says it was not finished. */
+export const UNFINISHED = 'unfinished';
+
 /**
  * A finished game. Games are kept on the device only when the player
  * archives them; until then one lives just as long as its result is on screen.
@@ -20,7 +23,10 @@ export interface SavedGame {
     speedPct?: number;
   };
   winner: PlayerColor | null;
-  reason: EndReason;
+  /** How it ended: one of the app's own endings, or a pasted game's own words. Empty if unknown. */
+  reason: EndReason | string;
+  /** Pasted in for analysis rather than played in the app. */
+  imported?: boolean;
   /** Moves in UCI notation. */
   moves: string[];
   /** Time charged for each move, in ms. */
@@ -66,6 +72,14 @@ export type Outcome = 'win' | 'loss' | 'draw';
 
 export const outcomeOf = (game: SavedGame): Outcome =>
   game.winner === null ? 'draw' : game.winner === game.playerColor ? 'win' : 'loss';
+
+/** "You won by checkmate", "Draw by repetition", "Unfinished game". */
+export function resultLine(game: SavedGame): string {
+  if (game.reason === UNFINISHED) return 'Unfinished game';
+  const outcome = outcomeOf(game);
+  const headline = outcome === 'draw' ? 'Draw' : outcome === 'win' ? 'You won' : 'You lost';
+  return game.reason ? `${headline} by ${game.reason}` : headline;
+}
 
 const clockTag = (ms: number): string => {
   const tenths = Math.max(0, Math.round(ms / 100));

@@ -72,16 +72,17 @@ Current position in this plan: see [STATUS.md](STATUS.md).
 - Built: an archive of games the player chooses to keep, with per-rating
   results and PGN export; review with engine verdicts, winning-chances chart
   and seconds-per-move chart; end-of-game statistics; three play styles
-  (Balanced, Aggressive, Solid).
-- Not built from the original wish list: fixed opening repertoires, and time
-  styles as personalities (e.g. a thinker who gets into time trouble). The
-  speed slider covers the simple case; `TimeProfile` is per-bot if more is
-  wanted.
+  (Balanced, Aggressive, Solid); four clock styles (Natural, Speedster,
+  Thinker, Scrambler); opening repertoires; analysis of a pasted game.
+- The original wish list for this phase is now fully built.
 - Review reuses the Stockfish worker and the think times recorded per move.
+- Pasted games are PGN text only. Fetching a game from a chess.com link was
+  left out: there is no public API for a single game, and the app is
+  otherwise entirely offline.
 
 ## Ideas parked
 
-- Opening repertoires: have the bot steer into chosen openings for practice.
+- Deeper opening lines, or lines the player adds, for the repertoires.
 - Best-move arrow on the review board (today the better move is named in text).
 - Underpromotion (promotion is always a queen today).
 - A piece set closer to chess.com's default, from a free source.

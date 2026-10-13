@@ -3,7 +3,7 @@
 // by hand. Load it from the dev server console:
 //   const { simulate } = await import('/src/dev/simulate.ts');
 //   const { createRatedBot } = await import('/src/bots/maiaBot.ts');
-//   await simulate(createRatedBot(1100), createRatedBot(1300), 60, 0);
+//   await simulate(createRatedBot({ rating: 1100 }), createRatedBot({ rating: 1300 }), 60, 0);
 
 import { Chess } from 'chess.js';
 import type { Bot } from '../bots';

@@ -24,7 +24,11 @@ speed up when they should, and lose on time.
   players, a winning-chances chart and a seconds-per-move chart.
 - **Archive:** keep the games you choose, see your score against each bot
   rating, export PGN with clock times.
-- **Play styles:** Balanced, Aggressive or Solid.
+- **Analyse any game:** paste PGN from chess.com or anywhere else and get the
+  same review.
+- **Characters:** a playing style (Balanced, Aggressive, Solid), a clock
+  style (Natural, Speedster, Thinker, Scrambler) and, if you want to practise
+  one, an opening the bot will steer into.
 
 ## How faithful is it?
 
@@ -39,6 +43,9 @@ Honest answers, because the point of the app is realism:
   players of those ratings, and 800 and 1600 are extrapolated.
 - **Pacing was measured on one-minute games only.** Other time controls are
   scaled from it by rule.
+- **Only the Balanced and Natural characters are measured.** The other
+  playing and clock styles are hand-built variations, and they shift a bot's
+  strength by an amount nobody has measured.
 - **Move ranks** use the thresholds chess.com publishes for Best down to
   Blunder. Its rules for Brilliant, Great and Miss are private, so those
   follow its descriptions. **Accuracy** uses the formula Lichess publishes.

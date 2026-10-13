@@ -1,4 +1,14 @@
-import { MAX_RATING, MIN_RATING, PLAY_STYLES, type OpponentChoice, type PlayStyle } from '../bots';
+import {
+  ANY_OPENING,
+  MAX_RATING,
+  MIN_RATING,
+  PLAY_STYLES,
+  TIME_STYLES,
+  type OpponentChoice,
+  type PlayStyle,
+  type TimeStyle,
+} from '../bots';
+import { OPENINGS } from '../core/openingBook';
 import {
   BASE_OPTIONS,
   durationLabel,
@@ -44,20 +54,36 @@ export function renderHome(
   settings: Settings,
   onPlay: () => void,
   onHistory: () => void,
+  onImport: () => void,
 ): void {
   const playButton = h('button', { class: 'primary play', onTap: onPlay });
   const description = h('div', { class: 'bot-desc' });
   // Rating, speed and style only apply to the human-like opponent.
   const tuning = h('div', { class: 'tuning' });
 
+  const styleNote = h('div', { class: 'bot-desc' });
+  const clockNote = h('div', { class: 'bot-desc' });
+
+  // The bot follows the chosen opening for as long as both sides stay in it.
+  const openingSelect = h('select', { class: 'select', attrs: { 'aria-label': 'Opening' } });
+  for (const { id, name } of [{ id: ANY_OPENING, name: 'Any opening' }, ...OPENINGS]) {
+    const option = h('option', { text: name, attrs: { value: id } });
+    option.selected = id === settings.opening;
+    openingSelect.append(option);
+  }
+  openingSelect.addEventListener('change', () => {
+    settings.opening = openingSelect.value;
+    update();
+  });
+
   const update = () => {
     saveSettings(settings);
     playButton.textContent = `Play ${timeControlLabel(settings.baseSec, settings.incSec)}`;
     const rated = settings.opponent === 'rated';
     tuning.hidden = !rated;
-    description.textContent = rated
-      ? (PLAY_STYLES.find(style => style.id === settings.playStyle)?.description ?? '')
-      : (OPPONENTS.find(o => o.value === settings.opponent)?.description ?? '');
+    description.textContent = rated ? '' : (OPPONENTS.find(o => o.value === settings.opponent)?.description ?? '');
+    styleNote.textContent = PLAY_STYLES.find(style => style.id === settings.playStyle)?.description ?? '';
+    clockNote.textContent = TIME_STYLES.find(style => style.id === settings.timeStyle)?.description ?? '';
   };
 
   const sound = h('input', { attrs: { type: 'checkbox' } });
@@ -91,6 +117,7 @@ export function renderHome(
         update();
       },
     }),
+    h('div', { class: 'tuning-label', text: 'Playing style' }),
     chips<PlayStyle>(
       PLAY_STYLES.map(style => ({ value: style.id, label: style.name })),
       settings.playStyle,
@@ -99,6 +126,19 @@ export function renderHome(
         update();
       },
     ),
+    styleNote,
+    h('div', { class: 'tuning-label', text: 'Clock style' }),
+    chips<TimeStyle>(
+      TIME_STYLES.map(style => ({ value: style.id, label: style.name })),
+      settings.timeStyle,
+      value => {
+        settings.timeStyle = value;
+        update();
+      },
+    ),
+    clockNote,
+    h('div', { class: 'tuning-label', text: 'Opening' }),
+    openingSelect,
   );
 
   const options = h(
@@ -108,7 +148,12 @@ export function renderHome(
       'div',
       { class: 'home-head' },
       h('h1', { text: 'Bullet Chess' }),
-      h('button', { class: 'secondary small', text: 'Archive', onTap: onHistory }),
+      h(
+        'div',
+        { class: 'home-links' },
+        h('button', { class: 'secondary small', text: 'Analyse', onTap: onImport }),
+        h('button', { class: 'secondary small', text: 'Archive', onTap: onHistory }),
+      ),
     ),
     h('h2', { text: 'Time control' }),
     h(

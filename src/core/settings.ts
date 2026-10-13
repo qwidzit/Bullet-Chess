@@ -28,6 +28,8 @@ const defaults: Settings = {
   rating: 1100,
   speedPct: 100,
   playStyle: 'balanced',
+  timeStyle: 'natural',
+  opening: 'any',
   sound: true,
 };
 

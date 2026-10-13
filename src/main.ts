@@ -9,6 +9,7 @@ import * as sounds from './core/sounds';
 import { GameScreen } from './ui/gameScreen';
 import { renderHistory } from './ui/historyScreen';
 import { renderHome } from './ui/home';
+import { renderImport } from './ui/importScreen';
 import { ReviewScreen } from './ui/reviewScreen';
 
 const root = document.getElementById('app')!;
@@ -29,7 +30,13 @@ function leave(): void {
 function showHome(): void {
   leave();
   goBack = undefined;
-  renderHome(root, settings, showGame, showHistory);
+  renderHome(root, settings, showGame, showHistory, showImport);
+}
+
+function showImport(): void {
+  leave();
+  goBack = showHome;
+  renderImport(root, showHome, game => showReview(game, showImport));
 }
 
 function showGame(): void {
@@ -62,6 +69,9 @@ void App.addListener('backButton', () => {
   else void App.minimizeApp();
 });
 
-document.addEventListener('contextmenu', e => e.preventDefault());
+// No long-press menus over the board or buttons, but text boxes keep theirs: it is how you paste.
+document.addEventListener('contextmenu', e => {
+  if (!(e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement)) e.preventDefault();
+});
 
 showHome();

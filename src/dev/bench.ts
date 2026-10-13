@@ -4,13 +4,13 @@
 //   bench.add([{ name: 'anchor', a: { rating: 1100 }, games: 24 }]);
 //   await bench.wait(40_000); bench.report();
 
-import { createMaiaBot, createRatedBot, type MaiaStyle, type PlayStyle } from '../bots/maiaBot';
+import { createMaiaBot, createRatedBot, type BotOptions, type MaiaStyle } from '../bots/maiaBot';
 import { DEFAULT_TIME_PROFILE, type TimeProfile } from '../bots/timeModel';
 import { measureBots } from './calibrate';
 
 /** Either a bot as the app would build it, or an experimental configuration. */
 export type BotSpec =
-  | { rating: number; speedPct?: number; playStyle?: PlayStyle }
+  | BotOptions
   | {
       /** Maia network, by its Lichess rating. */
       level: number;
@@ -33,7 +33,7 @@ export interface Job {
 type Measured = Awaited<ReturnType<typeof measureBots>>;
 
 function make(spec: BotSpec) {
-  if ('rating' in spec) return createRatedBot(spec.rating, spec.speedPct, spec.playStyle);
+  if ('rating' in spec) return createRatedBot(spec);
   return createMaiaBot(spec.level, spec.style, { ...DEFAULT_TIME_PROFILE, ...spec.timing });
 }
 

@@ -1058,3 +1058,89 @@ button.big {
 .review-summary td:last-child {
   width: 22%;
 }
+
+/* Home: links to the other screens, and labels inside the opponent settings. */
+
+.home-links {
+  display: flex;
+  gap: 8px;
+}
+
+.tuning-label {
+  margin-bottom: -6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.tuning .bot-desc {
+  min-height: 0;
+  margin-top: -8px;
+}
+
+.select {
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+}
+
+/* Analyse a pasted game */
+
+.import {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.import h2 {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* The one place in the app where text is typed, selected and pasted. */
+.pgn-input {
+  flex: 1;
+  min-height: 120px;
+  padding: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font: 13px/1.4 ui-monospace, Consolas, monospace;
+  resize: none;
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: auto;
+}
+
+.pgn-input::placeholder {
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+}
+
+.import-row {
+  display: flex;
+}
+
+.import-row button {
+  flex: 1;
+  padding: 12px;
+}
+
+.import-message {
+  min-height: 20px;
+  font-size: 14px;
+  color: #ff9d8f;
+}

@@ -2,7 +2,7 @@ import { Chessground } from '@lichess-org/chessground';
 import type { Api } from '@lichess-org/chessground/api';
 import type { Key } from '@lichess-org/chessground/types';
 import { Chess, type Move } from 'chess.js';
-import { deleteGame, isArchived, outcomeOf, pgnOf, saveGame, type SavedGame } from '../core/history';
+import { deleteGame, isArchived, pgnOf, resultLine, saveGame, type SavedGame } from '../core/history';
 import {
   accuracyOf,
   classifyGame,
@@ -35,6 +35,8 @@ export class ReviewScreen {
   private classes: MoveClass[] | undefined;
   private ply: number;
   private cancelled = false;
+  /** False for a game pasted without clock readings: there are no move times to show. */
+  private readonly timed: boolean;
 
   private readonly boardEl = h('div', { class: 'board' });
   private readonly badges = h('div', { class: 'badges' });
@@ -59,10 +61,11 @@ export class ReviewScreen {
       this.steps.push({ fen: chess.fen(), move });
     }
     this.ply = this.steps.length - 1;
+    this.timed = game.times.some(ms => ms > 0);
 
-    const outcome = outcomeOf(game);
-    const headline = outcome === 'draw' ? 'Draw' : outcome === 'win' ? 'You won' : 'You lost';
     const date = formatDate(game.playedAt);
+    const { timed } = this;
+    const details = [game.opponent.name, game.baseSec ? timeControlLabel(game.baseSec, game.incSec) : '', date];
     const copy = h('button', {
       class: 'secondary small',
       text: 'Copy PGN',
@@ -113,11 +116,8 @@ export class ReviewScreen {
         h(
           'div',
           { class: 'screen-title' },
-          h('div', { text: `${headline} by ${game.reason}` }),
-          h('div', {
-            class: 'screen-sub',
-            text: `${game.opponent.name} · ${timeControlLabel(game.baseSec, game.incSec)} · ${date}`,
-          }),
+          h('div', { text: resultLine(game) }),
+          h('div', { class: 'screen-sub', text: details.filter(Boolean).join(' · ') }),
         ),
       ),
       h('div', { class: 'board-wrap' }, this.frame),
@@ -174,7 +174,11 @@ export class ReviewScreen {
     });
 
     const width = this.timeSlot.clientWidth;
-    this.addChart(this.timeSlot, timeChart(width, game.times, game.playerColor === 'white', ply => this.show(ply)));
+    if (timed) {
+      this.addChart(this.timeSlot, timeChart(width, game.times, game.playerColor === 'white', ply => this.show(ply)));
+    } else {
+      this.timeSlot.textContent = 'This game has no clock times.';
+    }
     this.chancesSlot.textContent = 'Analysing…';
     this.show(this.ply);
     void this.analyse(width);
@@ -249,7 +253,8 @@ export class ReviewScreen {
       classes.filter((c, i) => c === cls && ((i % 2 === 0) === this.playerIsWhite) === own).length;
     const seconds = (own: boolean) => {
       const times = this.game.times.filter((_, i) => ((i % 2 === 0) === this.playerIsWhite) === own);
-      return times.length ? (times.reduce((a, b) => a + b, 0) / times.length / 1000).toFixed(2) : '–';
+      const total = times.reduce((a, b) => a + b, 0);
+      return total ? (total / times.length / 1000).toFixed(2) : '–';
     };
 
     this.summary.replaceChildren(
@@ -329,7 +334,8 @@ export class ReviewScreen {
     if (!move) return 'Starting position';
     const index = this.ply - 1;
     const number = `${Math.floor(index / 2) + 1}${index % 2 === 0 ? '.' : '…'}`;
-    const parts = [`${number} ${move.san}`, `${((this.game.times[index] ?? 0) / 1000).toFixed(1)} s`];
+    const parts = [`${number} ${move.san}`];
+    if (this.timed) parts.push(`${((this.game.times[index] ?? 0) / 1000).toFixed(1)} s`);
     const cls = this.classes?.[index];
     if (this.review && cls) {
       parts.push(MOVE_CLASSES.find(c => c.id === cls)!.name);

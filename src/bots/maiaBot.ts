@@ -1,9 +1,12 @@
+import { Chess } from 'chess.js';
+import { OPENINGS, repertoireMoves } from '../core/openingBook';
 import { engine } from './engine';
 import { dialsFor } from './levels';
 import type { MoveKind } from './maia/encode';
 import { loadMaia, predictMoves, type MovePrediction } from './maia/maiaClient';
 import { describeMove } from './moveContext';
 import { DEFAULT_TIME_PROFILE, drawGamePace, thinkTime, type TimeProfile } from './timeModel';
+import { timeProfileFor, type TimeStyle } from './timeStyles';
 import type { Bot, BotReply, BotRequest } from './types';
 import type { EngineLine } from './uciEngine';
 
@@ -104,6 +107,8 @@ class MaiaBot implements Bot {
   private previousEvalCp: number | null = null;
   /** How quick the bot happens to be in the current game. */
   private gamePace = 1;
+  /** False once the game has left the bot's repertoire, so it stops looking. */
+  private inRepertoire = true;
 
   constructor(
     private readonly networks: Networks,
@@ -111,6 +116,8 @@ class MaiaBot implements Bot {
     private readonly timing: TimeProfile,
     private readonly leaning: Leaning,
     label: { id: string; name: string; description: string },
+    /** Opening the bot steers into while the game allows it; null for none. */
+    private readonly openingId: string | null = null,
   ) {
     this.id = label.id;
     this.name = label.name;
@@ -125,6 +132,7 @@ class MaiaBot implements Bot {
   newGame(): void {
     this.previousEvalCp = null;
     this.gamePace = drawGamePace(this.timing);
+    this.inRepertoire = this.openingId !== null;
     engine.send('ucinewgame');
     engine.setOption('Skill Level', 20);
     // Several scored candidates per search: the time model reads the position's
@@ -145,14 +153,43 @@ class MaiaBot implements Bot {
     ]);
     const moves = lean(predicted, this.leaning);
 
-    let choice = sample(moves, style);
-    if (Math.random() < style.care) {
+    // A repertoire move, when there is one, is played without further thought.
+    const prepared = this.repertoireMove(request.moves);
+    let choice = moves.find(m => m.uci === prepared) ?? sample(moves, style);
+    if (choice.uci !== prepared && Math.random() < style.care) {
       choice = await this.secondLook(request.fen, moves, choice, analysis.lines);
     }
 
     const context = describeMove(request, choice.uci, analysis.lines, this.previousEvalCp, choice.p);
     this.previousEvalCp = context.evalCp;
     return { move: choice.uci, thinkMs: thinkTime(context, this.timing, this.gamePace), context };
+  }
+
+  /**
+   * The next move of the bot's opening, in UCI, if the game so far follows one
+   * of its lines. Works for either colour: the bot simply continues whichever
+   * line both players are on. Null when there is no repertoire or it has ended.
+   */
+  private repertoireMove(uciMoves: string[]): string | null {
+    if (!this.inRepertoire || !this.openingId) return null;
+    const chess = new Chess();
+    const san: string[] = [];
+    try {
+      for (const uci of uciMoves) {
+        san.push(chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] ?? 'q' }).san);
+      }
+    } catch {
+      // A game that did not start from the usual position has no opening to follow.
+      this.inRepertoire = false;
+      return null;
+    }
+    const options = repertoireMoves(this.openingId, san);
+    if (!options.length) {
+      this.inRepertoire = false;
+      return null;
+    }
+    const move = chess.move(options[Math.floor(Math.random() * options.length)]);
+    return move.from + move.to + (move.promotion ?? '');
   }
 
   /** Swaps a move that loses material for another candidate, if one holds up. */
@@ -197,26 +234,47 @@ export function createMaiaBot(
   );
 }
 
-/**
- * Builds the opponent for a chess.com bullet rating, a speed and a way of
- * playing. Speed is a percentage of the real pace measured for players
- * around 1100: 200 moves twice as fast, 50 half as fast.
- */
-export function createRatedBot(rating: number, speedPct = 100, playStyle: PlayStyle = 'balanced'): Bot {
+/** Everything that defines a human-like opponent. */
+export interface BotOptions {
+  /** Chess.com bullet rating to play at. */
+  rating: number;
+  /** Percentage of the style's normal pace: 200 moves twice as fast, 50 half as fast. */
+  speedPct?: number;
+  playStyle?: PlayStyle;
+  timeStyle?: TimeStyle;
+  /** Id of an opening to steer into, or 'any' for none. */
+  opening?: string;
+}
+
+export const ANY_OPENING = 'any';
+
+/** Builds the opponent for a rating, a speed and the chosen characters. */
+export function createRatedBot({
+  rating,
+  speedPct = 100,
+  playStyle = 'balanced',
+  timeStyle = 'natural',
+  opening = ANY_OPENING,
+}: BotOptions): Bot {
   const dials = dialsFor(rating);
+  const chosen = OPENINGS.find(o => o.id === opening);
+  // The name lists whatever differs from an ordinary opponent of that rating.
   const extras = [
     speedPct !== 100 ? `${speedPct}% speed` : '',
     playStyle !== 'balanced' ? playStyle : '',
+    timeStyle !== 'natural' ? timeStyle : '',
+    chosen?.name ?? '',
   ].filter(Boolean);
   return new MaiaBot(
     { low: dials.lowNetwork, high: dials.highNetwork, highShare: dials.highShare },
     { ...DEFAULT_MAIA_STYLE, temperature: dials.temperature, care: dials.care },
-    { ...DEFAULT_TIME_PROFILE, tempo: 100 / speedPct },
+    timeProfileFor(timeStyle, speedPct),
     LEANINGS[playStyle],
     {
-      id: `rated-${rating}-${speedPct}-${playStyle}`,
+      id: `rated-${rating}`,
       name: `Bot ${rating}${extras.length ? ` (${extras.join(', ')})` : ''}`,
       description: `Plays like a chess.com bullet player rated about ${rating}`,
     },
+    chosen?.id ?? null,
   );
 }

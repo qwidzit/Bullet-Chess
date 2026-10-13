@@ -5,11 +5,11 @@ Last updated: 2026-10-13. The plan and the reasons behind it are in
 
 ## Where we are
 
-**All six phases have a first version. The phone has the build with sliders,
-archive, review, play styles and end-of-game statistics; the newest build
-(time-control sliders, 5–200% speed, move ranks and accuracy in the review)
-is built but not yet installed. None of the parts added since calibration has
-been confirmed working on the phone yet. Next:
+**All six phases are built, including everything on the original wish list.
+The phone has the build with time-control sliders, move ranks, accuracy and
+the lifted drag piece; the newest build (clock styles, opening repertoires,
+analysis of pasted games) is built but not yet installed. None of the parts
+added since calibration has been confirmed working on the phone yet. Next:
 the user tunes rating and speed by feel with the two sliders and reports
 back; their findings become the new defaults.**
 
@@ -158,6 +158,21 @@ care 0.5 about +70.
   move probabilities by kind of move; in a four-game check the aggressive bot
   captured on 34% of its moves against 19% for the solid one. Their effect on
   strength is unmeasured: calibration was done with Balanced.
+- **Clock styles:** Natural (the measured pace), Speedster, Thinker and
+  Scrambler. The last three are hand-built characters, not fitted to anyone's
+  games. Simulated at 1+0 against a Natural bot, six games each: the Speedster
+  had about 47 s left at move 20 (Natural 36 s); the Scrambler kept pace early
+  and had 18 s at move 35 (Natural 13 s). The Thinker, over ten games, had 25 s left
+  at move 20 and lost four on time (Natural lost none of six); its first
+  version lost five of six, so it was made less slow.
+- **Opening repertoires:** pick one of 21 openings and the bot follows its
+  lines for as long as both sides stay in them, with either colour; after
+  that it plays as usual. Lines are a few moves deep (the same list the
+  review uses for Book).
+- **Analyse a pasted game:** paste PGN (what chess.com's Share → PGN gives,
+  PGN from other sites, or a bare move list), say which colour you played,
+  and it opens in the review, where it can be archived. Clock times are read
+  from the PGN when present. Only games from the normal starting position.
 - **Archive:** a game is kept on the device only when the player taps Archive
   on the result dialog or in the review (up to 400). The Archive screen lists
   them with a table of wins, losses and draws per bot rating, and exports PGN
@@ -198,7 +213,9 @@ care 0.5 about +70.
 | Archived games and PGN export | `src/core/history.ts` |
 | End-of-game statistics (tallied in the game, shown by) | `src/core/game.ts`, `src/ui/statsTable.ts` |
 | Engine review, move ranks, accuracy (also the calibration yardstick) | `src/core/review.ts` |
-| Opening lines that count as Book | `src/core/openingBook.ts` |
+| Openings: Book lines for the review, repertoires for the bots | `src/core/openingBook.ts` |
+| Clock styles | `src/bots/timeStyles.ts` |
+| Reading pasted PGN, and its screen | `src/core/pgnImport.ts`, `src/ui/importScreen.ts` |
 | History and review screens, review charts | `src/ui/historyScreen.ts`, `reviewScreen.ts`, `charts.ts` |
 | Maia input encoding, move table, inference worker | `src/bots/maia/` |
 | Position features fed to the time model | `src/bots/moveContext.ts` |
@@ -237,9 +254,9 @@ care 0.5 about +70.
   line premoves onto it rather than selecting it. Awaiting feedback.
 - Pieces and sounds are not chess.com's (proprietary). A closer free piece set
   is an open option.
-- The automated tests (`npm test`, 117 of them) cover the clock, premove
-  queue, game endings, statistics, time model, level table, review, opening
-  book, archive and settings, and compare the Maia pipeline with lc0's
-  recorded probabilities. They do not cover the screens, the bots' move
+- The automated tests (`npm test`, 140 of them) cover the clock, premove
+  queue, game endings, statistics, time model, clock styles, level table,
+  review, opening book and repertoires, PGN import, archive and settings, and
+  compare the Maia pipeline with lc0's recorded probabilities. They do not cover the screens, the bots' move
   sampling, or anything on a real phone. There is no continuous integration:
   the tests run only when someone runs them.

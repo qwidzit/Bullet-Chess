@@ -60,7 +60,16 @@ function gameRow(game: SavedGame, onOpen: (game: SavedGame) => void): HTMLElemen
       h('span', { class: 'game-row-title', text: game.opponent.name }),
       h('span', {
         class: 'game-row-sub',
-        text: `${timeControlLabel(game.baseSec, game.incSec)} · ${game.reason} · ${Math.ceil(game.moves.length / 2)} moves · ${when}`,
+        // Pasted games may lack a time control or a stated ending; leave those out.
+        text: [
+          game.imported ? 'Imported' : '',
+          game.baseSec ? timeControlLabel(game.baseSec, game.incSec) : '',
+          game.reason,
+          `${Math.ceil(game.moves.length / 2)} moves`,
+          when,
+        ]
+          .filter(Boolean)
+          .join(' · '),
       }),
     ),
   );
